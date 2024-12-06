@@ -1,0 +1,17 @@
+{
+  "name": "weridscript",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0",
+    "prettier": "^3.4.2",
+    "sharp": "^0.33.5",
+    "tsx": "^4.19.2"
+  }
+}
