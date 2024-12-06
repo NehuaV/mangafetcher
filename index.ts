@@ -36,14 +36,14 @@ async function downloadImage(url: string, directory: string): Promise<void> {
 }
 
 type Options = {
-  scopeSelector: string;
-  imagesDir: string;
+  scopeSelector: string; // XPath for scoping
+  imagesDir: string; // Directory to save images
 };
 
 async function main(
   targetUrl: string,
   options: Options = {
-    scopeSelector: ".ImageGallery",
+    scopeSelector: "//html/body",
     imagesDir: "./images",
   }
 ) {
@@ -63,16 +63,18 @@ async function main(
   console.log("Navigating to page...");
   await page.goto(targetUrl);
 
-  // Wait for the content to be loaded
   await page.waitForLoadState("domcontentloaded");
   console.log("Extracting image URLs...");
 
-  const imageUrls = await page.$$eval("img", (imgs) =>
-    imgs
-      .filter((img) => img.naturalHeight > 512 && img.naturalWidth > 512)
-      .map((img) => img.src)
-      .filter((src) => !!src)
-  );
+  const imageUrls = await page
+    .locator(options.scopeSelector)
+    .evaluate((element: Element): string[] => {
+      const imgs = Array.from(element.querySelectorAll("img"));
+      return imgs
+        .filter((img) => img.naturalHeight > 512 && img.naturalWidth > 512)
+        .map((img) => img.src)
+        .filter((src) => !!src);
+    });
 
   console.log(`Found ${imageUrls.length} images meeting size requirements.`);
 
@@ -89,5 +91,9 @@ async function main(
 }
 
 main(
-  "https://asuracomic.net/series/the-regressed-mercenarys-machinations-175de8e7/chapter/1"
+  "https://asuracomic.net/series/the-regressed-mercenarys-machinations-175de8e7/chapter/1",
+  {
+    scopeSelector: "//html/body/div[3]/div/div/div/div[5]",
+    imagesDir: "./images",
+  }
 );
