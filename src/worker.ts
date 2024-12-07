@@ -1,11 +1,17 @@
 import { parentPort } from "worker_threads";
 import sharp from "sharp";
+import type { Chapter } from "./lib/types";
 
 if (!parentPort) {
   throw new Error("parentPort is not available");
 }
 
-parentPort.on("message", async ({ chapter, directory }) => {
+type Message = {
+  chapter: Chapter;
+  directory: string;
+};
+
+parentPort.on("message", async ({ chapter, directory }: Message) => {
   try {
     const filename = `${chapter.name}.webp`;
     const filePath = `${directory}/${filename}`;

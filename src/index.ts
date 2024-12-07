@@ -1,9 +1,8 @@
 // import fetch from "cross-fetch"; // If bun poses problems, uncomment this & install
 import { readdir } from "fs/promises";
-import { firefox, type Page } from "playwright";
-import { createImageDownloadWorker, upsertDir } from "./utils";
+import { type Page } from "playwright";
+import { createBrowser, createImageDownloadWorker, upsertDir } from "./utils";
 import { Queue } from "./lib/queue";
-import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
 import {
   CreateIntegration,
   CreateEnvironment,
@@ -11,14 +10,12 @@ import {
 } from "./drivers";
 import type { Chapter } from "./lib/types";
 
-type Options = {
-  scopeSelector: string; // XPath for scoping
-  imagesDir: string; // Directory to save images
-};
-
 async function runner(chapter: Chapter, page: Page, integration: Integration) {
-  console.log("Extracting image URLs...");
+  console.log("Navigating to chapter...");
+  await page.goto(chapter.url);
+  await page.waitForLoadState("networkidle");
 
+  console.log("Extracting image URLs...");
   const imageUrls = await page
     .locator(integration.environment.scopeSelector)
     .evaluate((element: Element): string[] => {
@@ -55,16 +52,16 @@ async function runner(chapter: Chapter, page: Page, integration: Integration) {
   }
 }
 
-async function getMangaName(page: Page, driver: Integration) {
+async function getMangaName(page: Page, integration: Integration) {
   page.setDefaultTimeout(1_000);
-  const mangaName = await driver.titleFinder(page);
+  const mangaName = await integration.titleFinder(page);
   page.setDefaultTimeout(30_000);
 
   if (mangaName) {
     const newMangaName = mangaName.toLowerCase();
     console.log("Using manga name:", mangaName);
     console.log("Converted manga name:", newMangaName);
-    return `${driver.environment.outDir}/${newMangaName}`;
+    return `${integration.environment.outDir}/${newMangaName}`;
   }
 
   // Otherwise, use first two path parameters of the URL
@@ -74,12 +71,12 @@ async function getMangaName(page: Page, driver: Integration) {
     .join("-");
 
   console.log("Using target URL paths:", targetUrlPaths);
-  return `${driver.environment.outDir}/${targetUrlPaths}`;
+  return `${integration.environment.outDir}/${targetUrlPaths}`;
 }
 
-async function getAllChapters(page: Page, driver: Integration) {
+async function getAllChapters(page: Page, integration: Integration) {
   page.setDefaultTimeout(1_000);
-  const chapters = await driver.chaptersFinder(page);
+  const chapters = await integration.chaptersFinder(page);
   page.setDefaultTimeout(30_000);
 
   if (chapters.length === 0) {
@@ -138,25 +135,6 @@ async function downloadImagesParallel(
   return (await Promise.all(results)).filter(Boolean);
 }
 
-async function createBrowser() {
-  const browser = await firefox.launch({
-    headless: true,
-  });
-  const context = await browser.newContext();
-
-  // Setup the ad blocker
-  const blocker = await PlaywrightBlocker.fromLists(fetch, [
-    "https://easylist.to/easylist/easylist.txt",
-    // more filter lists
-    // 'https://easylist-downloads.adblockplus.org/uce.txt',
-  ]);
-
-  const page = await context.newPage();
-  await blocker.enableBlockingInPage(page);
-
-  return { browser, context, page };
-}
-
 async function main(integration: Integration) {
   if (!integration.environment.pathToSeries) {
     throw new Error("pathToSeries is required");
@@ -165,6 +143,7 @@ async function main(integration: Integration) {
   console.log("Upserting image directory...");
   await upsertDir(integration.environment.outDir);
 
+  console.log("Creating browser...");
   const { browser, context, page } = await createBrowser();
 
   console.log("Navigating to page...");
@@ -174,10 +153,10 @@ async function main(integration: Integration) {
 
   console.log("Determining manga name...");
   const directory = await getMangaName(page, integration);
-  console.log("Directory:", directory);
 
   console.log("Getting all chapters...");
   const chapters = await getAllChapters(page, integration);
+
   console.log("Chapters:", chapters);
 
   console.log("Upserting directory:", directory);
@@ -196,7 +175,7 @@ try {
     baseURL: "https://asuracomic.net",
     pathToSeries: "/series/the-regressed-mercenarys-machinations-8693b675",
     outDir: "./images",
-    scopeSelector: "",
+    scopeSelector: "//html/body/div[3]/div/div/div/div[5]",
     titleSelectors: [
       "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[1]/div[2]/div[1]/span",
     ],
@@ -239,8 +218,10 @@ try {
 
           // Get Inner a tag and its href attribute
           const aTag = element.locator("a");
-          const url = await aTag.getAttribute("href");
+          const urlPathName = await aTag.getAttribute("href");
           const name = await aTag.innerText();
+
+          const url = `${integration.environment.baseURL}/${urlPathName}`;
 
           chapters.push({
             url: url || "",
