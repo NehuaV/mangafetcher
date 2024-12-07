@@ -30,7 +30,6 @@ async function main(
   ]);
 
   const page = await context.newPage();
-  page.setDefaultTimeout(1000);
   await blocker.enableBlockingInPage(page);
 
   console.log("Navigating to page...");
@@ -84,6 +83,7 @@ async function main(
 async function determineMangaName(page: Page, imagesDir: string) {
   // Use heading if available
   const headings = ["h1", "h2"];
+  page.setDefaultTimeout(1_000);
 
   for (const heading of headings) {
     const headingText = await page
@@ -93,9 +93,11 @@ async function determineMangaName(page: Page, imagesDir: string) {
       .catch(() => null);
 
     if (headingText) {
+      page.setDefaultTimeout(30_000);
       return `${imagesDir}/${headingText}`;
     }
   }
+  page.setDefaultTimeout(30_000);
 
   // Otherwise, use first two path parameters of the URL
   const targetUrlPaths = new URL(page.url()).pathname.split("/").slice(0, 3);
