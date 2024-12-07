@@ -1,16 +1,39 @@
 # weridscript
 
-Small script made for crawling images, compressing them and backing them up
+<marquee
+  direction="down"
+  width="100%"
+  height="200"
+  behavior="alternate"
+  style="border:solid">
+<marquee behavior="alternate">Small script made for crawling images,<br>compressing them and backing them up</marquee>
+</marquee>
 
 ## Running the app
 
-To install dependencies:
+### Install bun runtime
+
+Official Link here: https://bun.sh/
+
+Linux/Macos
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+Windows
+
+```bash
+powershell -c "irm bun.sh/install.ps1 | iex"
+```
+
+### To install dependencies:
 
 ```bash
 bun i
 ```
 
-To run:
+### To run:
 
 ```bash
 bun start
