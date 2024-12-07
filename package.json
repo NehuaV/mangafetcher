@@ -9,9 +9,8 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@cliqz/adblocker-playwright": "^1.34.0",
     "playwright": "^1.49.0",
-    "prettier": "^3.4.2",
-    "sharp": "^0.33.5",
-    "tsx": "^4.19.2"
+    "sharp": "^0.33.5"
   }
 }
