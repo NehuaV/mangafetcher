@@ -16,7 +16,7 @@ export async function upsertDir(dir: string) {
 
 export function createImageDownloadWorker(
   chapter: ChapterImage,
-  directory: string,
+  chapterDir: string,
   environment: Environment
 ): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -33,7 +33,7 @@ export function createImageDownloadWorker(
     worker.on("error", reject);
     worker.postMessage({
       chapter,
-      directory,
+      chapterDir,
       environment,
     });
   });

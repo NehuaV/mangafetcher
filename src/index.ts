@@ -50,13 +50,14 @@ async function runner(
   }
 
   try {
-    const existingFiles = await readdir(integration.environment.outDir);
+    const chapterDir = `${directory}/${chapter.name}`;
+    const existingFiles = await readdir(chapterDir);
     if (imageQueue.size() === existingFiles.length) {
       console.log("All images already downloaded.");
       return;
     }
 
-    await downloadImagesParallel(imageQueue, directory, integration);
+    await downloadImagesParallel(imageQueue, chapterDir, integration);
     console.log("All downloads completed successfully!");
   } catch (error) {
     console.error("Error in main:", error);
@@ -99,7 +100,7 @@ async function getAllChapters(page: Page, integration: Integration) {
 
 async function downloadImagesParallel(
   imageQueue: Queue<ChapterImage>,
-  directory: string,
+  chapterDir: string,
   integration: Integration
 ) {
   const maxConcurrent = Math.min(navigator.hardwareConcurrency - 1 || 1, 4); // Limit max concurrent downloads
@@ -119,7 +120,7 @@ async function downloadImagesParallel(
 
         const promise = createImageDownloadWorker(
           chapter,
-          directory,
+          chapterDir,
           integration.environment
         )
           .then((filename) => {
@@ -168,9 +169,6 @@ async function main(integration: Integration) {
     throw new Error("pathToSeries is required");
   }
 
-  console.log("Upserting image directory...");
-  await upsertDir(integration.environment.outDir);
-
   console.log("Creating browser...");
   const { browser, context, page } = await createBrowser();
 
@@ -186,9 +184,6 @@ async function main(integration: Integration) {
   const chapters = await getAllChapters(page, integration);
 
   console.log("Chapters:", chapters);
-
-  console.log("Upserting directory:", directory);
-  await upsertDir(directory);
 
   for (const chapter of chapters) {
     await runner(chapter, directory, page, integration);

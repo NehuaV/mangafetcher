@@ -10,18 +10,18 @@ if (!parentPort) {
 
 type Message = {
   chapter: ChapterImage;
-  directory: string;
+  chapterDir: string;
   environment: Environment;
 };
 
 parentPort.on(
   "message",
-  async ({ chapter, directory, environment }: Message) => {
+  async ({ chapter, chapterDir, environment }: Message) => {
     let controller: AbortController | null = new AbortController();
 
     try {
       const filename = `${chapter.imageName}.webp`;
-      const filePath = `${directory}/${chapter.name}`;
+      const filePath = chapterDir;
       const fullPath = `${filePath}/${filename}`;
       await upsertDir(filePath);
 
