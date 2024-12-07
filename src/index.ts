@@ -37,7 +37,10 @@ async function runner(
   await page.waitForLoadState("networkidle");
 
   console.log("Determining manga name...");
-  const directory = await determineMangaName(page, options.imagesDir);
+  const directory = await getMangaName(page, options.imagesDir);
+
+  // Get All Chapters
+  const chapters = await getAllChapters(page);
 
   console.log("Upserting directory:", directory);
   await upsertDir(directory);
@@ -80,7 +83,7 @@ async function runner(
   }
 }
 
-async function determineMangaName(page: Page, imagesDir: string) {
+async function getMangaName(page: Page, imagesDir: string) {
   // Use heading if available
   const headings = ["h1", "h2"];
   page.setDefaultTimeout(1_000);
@@ -107,6 +110,10 @@ async function determineMangaName(page: Page, imagesDir: string) {
 
   console.log("Using target URL paths:", targetUrlPaths);
   return `${imagesDir}/${targetUrlPaths}`;
+}
+
+async function getAllChapters(page: Page) {
+  throw new Error("Not implemented");
 }
 
 async function downloadImagesParallel(
