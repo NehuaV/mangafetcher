@@ -1,7 +1,9 @@
 import { stat, mkdir } from "fs/promises";
 import { Worker } from "worker_threads";
 import path from "path";
-export async function ensureDirExists(dir: string) {
+import type { Chapter } from "./lib/types";
+
+export async function upsertDir(dir: string) {
   try {
     await stat(dir);
   } catch {
@@ -10,11 +12,11 @@ export async function ensureDirExists(dir: string) {
 }
 
 export function createImageDownloadWorker(
-  url: string,
+  chapter: Chapter,
   directory: string
 ): Promise<string> {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(path.join(__dirname, "worker.js"));
+    const worker = new Worker(path.join(__dirname, "worker.ts"));
 
     worker.on("message", (message) => {
       if (message.success) {
@@ -25,6 +27,6 @@ export function createImageDownloadWorker(
     });
 
     worker.on("error", reject);
-    worker.postMessage({ url, directory });
+    worker.postMessage({ chapter, directory });
   });
 }

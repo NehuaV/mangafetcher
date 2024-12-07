@@ -1,7 +1,9 @@
 import { firefox, type BrowserContext } from "playwright";
 import { readdir } from "fs/promises";
 import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
-import { createImageDownloadWorker, ensureDirExists } from "./utils";
+import { createImageDownloadWorker, upsertDir } from "./utils";
+import { Queue } from "./lib/queue";
+import type { Chapter } from "./lib/types";
 // import fetch from "cross-fetch"; // If bun poses problems, uncomment this & install
 
 type Options = {
@@ -25,7 +27,7 @@ async function main(
 
   const directory = `${options.imagesDir}/${fullPath}`;
   console.log("Upserting directory:", directory);
-  await ensureDirExists(directory);
+  await upsertDir(directory);
 
   // Setup the ad blocker
   const blocker = await PlaywrightBlocker.fromLists(fetch, [
@@ -55,15 +57,21 @@ async function main(
 
   console.log(`Found ${imageUrls.length} images meeting size requirements.`);
 
+  console.log("Feeding into queue...");
+  const imageQueue = new Queue<Chapter>();
+  for (const [index, url] of imageUrls.entries()) {
+    imageQueue.enqueue({ url, index, name: `page-${index}` });
+  }
+
   try {
     const existingFiles = await readdir(directory);
-    if (imageUrls.length === existingFiles.length) {
+    if (imageQueue.size() === existingFiles.length) {
       console.log("All images already downloaded.");
       await page.close();
       return;
     }
 
-    await downloadImagesParallel(imageUrls, directory);
+    await downloadImagesParallel(imageQueue, directory);
     console.log("All downloads completed successfully!");
   } catch (error) {
     console.error("Error in main:", error);
@@ -73,24 +81,26 @@ async function main(
   }
 }
 
-async function downloadImagesParallel(imageUrls: string[], directory: string) {
+async function downloadImagesParallel(
+  imageQueue: Queue<Chapter>,
+  directory: string
+) {
   // Makes device cpu's cores available
   const maxConcurrent =
     navigator.hardwareConcurrency > 1 ? navigator.hardwareConcurrency - 1 : 1;
-  const queue = [...imageUrls];
   const active = new Set<Promise<string | null>>();
   const results: Promise<string | null>[] = [];
 
   try {
-    while (queue.length > 0 || active.size > 0) {
-      while (queue.length > 0 && active.size < maxConcurrent) {
-        const url = queue.shift()!;
-        if (!url.startsWith("http")) {
-          console.warn(`Skipping non-http image URL: ${url}`);
+    while (imageQueue.size() > 0 || active.size > 0) {
+      while (imageQueue.size() > 0 && active.size < maxConcurrent) {
+        const chapter = imageQueue.dequeue()!;
+        if (!chapter.url.startsWith("http")) {
+          console.warn(`Skipping non-http image URL: ${chapter.url}`);
           continue;
         }
 
-        const promise = createImageDownloadWorker(url, directory)
+        const promise = createImageDownloadWorker(chapter, directory)
           .then((filename) => {
             active.delete(promise);
             console.log(`Downloaded: ${filename}`);
@@ -98,7 +108,7 @@ async function downloadImagesParallel(imageUrls: string[], directory: string) {
           })
           .catch((error) => {
             active.delete(promise);
-            console.error(`Error downloading ${url}: ${error.message}`);
+            console.error(`Error downloading ${chapter.url}: ${error.message}`);
             return null;
           });
 
