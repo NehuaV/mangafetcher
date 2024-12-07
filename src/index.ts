@@ -100,10 +100,13 @@ async function determineMangaName(page: Page, imagesDir: string) {
   page.setDefaultTimeout(30_000);
 
   // Otherwise, use first two path parameters of the URL
-  const targetUrlPaths = new URL(page.url()).pathname.split("/").slice(0, 3);
-  const fullPath = targetUrlPaths.join("-");
+  const targetUrlPaths = new URL(page.url()).pathname
+    .split("/")
+    .filter(Boolean)
+    .join("-");
 
-  return `${imagesDir}/${fullPath}`;
+  console.log("Using target URL paths:", targetUrlPaths);
+  return `${imagesDir}/${targetUrlPaths}`;
 }
 
 async function downloadImagesParallel(
