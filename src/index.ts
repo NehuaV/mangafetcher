@@ -1,54 +1,26 @@
-import { firefox, type BrowserContext, type Page } from "playwright";
+// import fetch from "cross-fetch"; // If bun poses problems, uncomment this & install
 import { readdir } from "fs/promises";
-import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
+import { firefox, type Page } from "playwright";
 import { createImageDownloadWorker, upsertDir } from "./utils";
 import { Queue } from "./lib/queue";
+import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
+import {
+  CreateIntegration,
+  CreateEnvironment,
+  type Integration,
+} from "./drivers";
 import type { Chapter } from "./lib/types";
-// import fetch from "cross-fetch"; // If bun poses problems, uncomment this & install
 
 type Options = {
   scopeSelector: string; // XPath for scoping
   imagesDir: string; // Directory to save images
 };
 
-async function runner(
-  targetUrl: string,
-  context: BrowserContext,
-  options: Options = {
-    scopeSelector: "//html/body",
-    imagesDir: "./images",
-  }
-) {
-  console.log("Upserting image directory...");
-  await upsertDir(options.imagesDir);
-
-  // Setup the ad blocker
-  const blocker = await PlaywrightBlocker.fromLists(fetch, [
-    "https://easylist.to/easylist/easylist.txt",
-    // more filter lists
-    // 'https://easylist-downloads.adblockplus.org/uce.txt',
-  ]);
-
-  const page = await context.newPage();
-  await blocker.enableBlockingInPage(page);
-
-  console.log("Navigating to page...");
-  await page.goto(targetUrl);
-  await page.waitForLoadState("networkidle");
-
-  console.log("Determining manga name...");
-  const directory = await getMangaName(page, options.imagesDir);
-
-  // Get All Chapters
-  const chapters = await getAllChapters(page);
-
-  console.log("Upserting directory:", directory);
-  await upsertDir(directory);
-
+async function runner(chapter: Chapter, page: Page, integration: Integration) {
   console.log("Extracting image URLs...");
 
   const imageUrls = await page
-    .locator(options.scopeSelector)
+    .locator(integration.environment.scopeSelector)
     .evaluate((element: Element): string[] => {
       const imgs = Array.from(element.querySelectorAll("img"));
       return imgs
@@ -66,14 +38,14 @@ async function runner(
   }
 
   try {
-    const existingFiles = await readdir(directory);
+    const existingFiles = await readdir(integration.environment.outDir);
     if (imageQueue.size() === existingFiles.length) {
       console.log("All images already downloaded.");
       await page.close();
       return;
     }
 
-    await downloadImagesParallel(imageQueue, directory);
+    await downloadImagesParallel(imageQueue, integration.environment.outDir);
     console.log("All downloads completed successfully!");
   } catch (error) {
     console.error("Error in main:", error);
@@ -83,24 +55,17 @@ async function runner(
   }
 }
 
-async function getMangaName(page: Page, imagesDir: string) {
-  // Use heading if available
-  const headings = ["h1", "h2"];
+async function getMangaName(page: Page, driver: Integration) {
   page.setDefaultTimeout(1_000);
-
-  for (const heading of headings) {
-    const headingText = await page
-      .locator(heading)
-      .nth(0)
-      .innerText()
-      .catch(() => null);
-
-    if (headingText) {
-      page.setDefaultTimeout(30_000);
-      return `${imagesDir}/${headingText}`;
-    }
-  }
+  const mangaName = await driver.titleFinder(page);
   page.setDefaultTimeout(30_000);
+
+  if (mangaName) {
+    const newMangaName = mangaName.toLowerCase();
+    console.log("Using manga name:", mangaName);
+    console.log("Converted manga name:", newMangaName);
+    return `${driver.environment.outDir}/${newMangaName}`;
+  }
 
   // Otherwise, use first two path parameters of the URL
   const targetUrlPaths = new URL(page.url()).pathname
@@ -109,11 +74,18 @@ async function getMangaName(page: Page, imagesDir: string) {
     .join("-");
 
   console.log("Using target URL paths:", targetUrlPaths);
-  return `${imagesDir}/${targetUrlPaths}`;
+  return `${driver.environment.outDir}/${targetUrlPaths}`;
 }
 
-async function getAllChapters(page: Page) {
-  throw new Error("Not implemented");
+async function getAllChapters(page: Page, driver: Integration) {
+  page.setDefaultTimeout(1_000);
+  const chapters = await driver.chaptersFinder(page);
+  page.setDefaultTimeout(30_000);
+
+  if (chapters.length === 0) {
+    throw new Error("No chapters found");
+  }
+  return chapters;
 }
 
 async function downloadImagesParallel(
@@ -166,26 +138,123 @@ async function downloadImagesParallel(
   return (await Promise.all(results)).filter(Boolean);
 }
 
-const chapterarr = [
-  "https://asuracomic.net/series/the-regressed-mercenarys-machinations-175de8e7/chapter/1",
-  "https://asuracomic.net/series/the-regressed-mercenarys-machinations-175de8e7/chapter/2",
-];
-
-try {
+async function createBrowser() {
   const browser = await firefox.launch({
     headless: true,
   });
   const context = await browser.newContext();
 
-  for (const chapter of chapterarr) {
-    await runner(chapter, context, {
-      scopeSelector: "//html/body/div[3]/div/div/div/div[5]/div",
-      imagesDir: "./images",
-    });
+  // Setup the ad blocker
+  const blocker = await PlaywrightBlocker.fromLists(fetch, [
+    "https://easylist.to/easylist/easylist.txt",
+    // more filter lists
+    // 'https://easylist-downloads.adblockplus.org/uce.txt',
+  ]);
+
+  const page = await context.newPage();
+  await blocker.enableBlockingInPage(page);
+
+  return { browser, context, page };
+}
+
+async function main(integration: Integration) {
+  if (!integration.environment.pathToSeries) {
+    throw new Error("pathToSeries is required");
+  }
+
+  console.log("Upserting image directory...");
+  await upsertDir(integration.environment.outDir);
+
+  const { browser, context, page } = await createBrowser();
+
+  console.log("Navigating to page...");
+  const targetUrl = `${integration.environment.baseURL}${integration.environment.pathToSeries}`;
+  await page.goto(targetUrl);
+  await page.waitForLoadState("networkidle");
+
+  console.log("Determining manga name...");
+  const directory = await getMangaName(page, integration);
+  console.log("Directory:", directory);
+
+  console.log("Getting all chapters...");
+  const chapters = await getAllChapters(page, integration);
+  console.log("Chapters:", chapters);
+
+  console.log("Upserting directory:", directory);
+  await upsertDir(directory);
+
+  for (const chapter of chapters) {
+    await runner(chapter, page, integration);
   }
 
   await context.close();
   await browser.close();
+}
+
+try {
+  const environment = CreateEnvironment({
+    baseURL: "https://asuracomic.net",
+    pathToSeries: "/series/the-regressed-mercenarys-machinations-8693b675",
+    outDir: "./images",
+    scopeSelector: "",
+    titleSelectors: [
+      "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[1]/div[2]/div[1]/span",
+    ],
+    chaptersSelectors: [
+      "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]",
+    ],
+  });
+  const integration = CreateIntegration(environment, {
+    titleFinder: async (page: Page) => {
+      const xpaths = environment.titleSelectors;
+
+      for (const xpath of xpaths) {
+        const headingText = await page
+          .locator(xpath)
+          .innerText()
+          .catch(() => null);
+
+        if (headingText) {
+          page.setDefaultTimeout(30_000);
+          return `${headingText}`;
+        }
+      }
+
+      return "";
+    },
+    chaptersFinder: async (page: Page) => {
+      const xpaths = environment.chaptersSelectors;
+
+      const chapters: Chapter[] = [];
+
+      for (const xpath of xpaths) {
+        // Get all child elements from the chapter list container
+        const listofChapterElements = await page.locator(`${xpath}/*`).count();
+
+        for (let i = 0; i < listofChapterElements; i++) {
+          // Get all elements in reverse order
+          const element = page
+            .locator(`${xpath}/*`)
+            .nth(listofChapterElements - i - 1);
+
+          // Get Inner a tag and its href attribute
+          const aTag = element.locator("a");
+          const url = await aTag.getAttribute("href");
+          const name = await aTag.innerText();
+
+          chapters.push({
+            url: url || "",
+            index: i,
+            name: name || `Chapter ${i + 1} ()`,
+          });
+        }
+      }
+
+      return chapters;
+    },
+  });
+
+  await main(integration);
 } catch (error) {
   console.error("Fatal error:", error);
   process.exit(1);
