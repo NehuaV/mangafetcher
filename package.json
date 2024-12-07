@@ -1,7 +1,10 @@
 {
-  "name": "weridscript",
-  "module": "index.ts",
+  "name": "crawlfetcher",
+  "module": "src/index.ts",
   "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
