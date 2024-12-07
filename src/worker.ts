@@ -17,26 +17,45 @@ type Message = {
 parentPort.on(
   "message",
   async ({ chapter, directory, environment }: Message) => {
+    let controller: AbortController | null = new AbortController();
+
     try {
       const filename = `${chapter.imageName}.webp`;
       const filePath = `${directory}/${chapter.name}`;
       const fullPath = `${filePath}/${filename}`;
       await upsertDir(filePath);
 
+      // Set a timeout of 10 seconds
+      const timeoutId = setTimeout(() => {
+        controller?.abort();
+        controller = null;
+      }, 10000);
+
       const response = await fetch(chapter.url, {
-        signal: AbortSignal.timeout(10_000),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
         throw new Error(`Failed to fetch: ${response.statusText}`);
       }
 
       const arrayBuffer = await response.arrayBuffer();
+
+      // Add timeout for image processing
+      const processTimeoutId = setTimeout(() => {
+        throw new Error("Image processing timeout");
+      }, 15000);
+
       await sharp(arrayBuffer)
         .webp({
           quality: 80,
           effort: 6,
         })
         .toFile(fullPath);
+
+      clearTimeout(processTimeoutId);
 
       parentPort?.postMessage({ success: true, filename });
     } catch (error) {
@@ -46,6 +65,7 @@ parentPort.on(
         parentPort?.postMessage({ success: false, error: "Unknown error" });
       }
     } finally {
+      controller = null;
       parentPort?.close();
     }
   }

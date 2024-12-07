@@ -6,4 +6,5 @@ export type Chapter = {
 
 export type ChapterImage = Chapter & {
   imageName: string;
+  retryCount?: number;
 };

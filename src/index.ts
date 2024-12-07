@@ -102,11 +102,11 @@ async function downloadImagesParallel(
   directory: string,
   integration: Integration
 ) {
-  // Makes device cpu's cores available
-  const maxConcurrent =
-    navigator.hardwareConcurrency > 1 ? navigator.hardwareConcurrency - 1 : 1;
+  const maxConcurrent = Math.min(navigator.hardwareConcurrency - 1 || 1, 4); // Limit max concurrent downloads
   const active = new Set<Promise<string | null>>();
   const results: Promise<string | null>[] = [];
+  const retryQueue = new Queue<ChapterImage>();
+  const maxRetries = 3;
 
   try {
     while (imageQueue.size() > 0 || active.size > 0) {
@@ -130,6 +130,12 @@ async function downloadImagesParallel(
           .catch((error) => {
             active.delete(promise);
             console.error(`Error downloading ${chapter.url}: ${error.message}`);
+
+            // Add to retry queue if under max retries
+            if ((chapter.retryCount || 0) < maxRetries) {
+              chapter.retryCount = (chapter.retryCount || 0) + 1;
+              retryQueue.enqueue(chapter);
+            }
             return null;
           });
 
@@ -142,7 +148,12 @@ async function downloadImagesParallel(
       }
     }
 
-    // Wait for all remaining promises to complete
+    // Process retry queue
+    while (retryQueue.size() > 0) {
+      imageQueue.enqueue(retryQueue.dequeue()!);
+    }
+
+    // Wait for all results to resolve
     await Promise.all(results);
   } catch (error) {
     console.error("Error in parallel download:", error);

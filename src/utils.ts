@@ -41,7 +41,7 @@ export function createImageDownloadWorker(
 
 export async function createBrowser() {
   const browser = await firefox.launch({
-    headless: false,
+    headless: true,
   });
   const context = await browser.newContext();
 
