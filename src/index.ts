@@ -1,6 +1,6 @@
 // import fetch from "cross-fetch"; // If bun poses problems, uncomment this & install
 import { readdir } from "fs/promises";
-import { type Page } from "playwright";
+import { type BrowserContext, type Page } from "playwright";
 import { createBrowser, createImageDownloadWorker, upsertDir } from "./utils";
 import { Queue } from "./lib/queue";
 import {
@@ -8,9 +8,14 @@ import {
   CreateEnvironment,
   type Integration,
 } from "./drivers";
-import type { Chapter } from "./lib/types";
+import type { Chapter, ChapterImage } from "./lib/types";
 
-async function runner(chapter: Chapter, page: Page, integration: Integration) {
+async function runner(
+  chapter: Chapter,
+  directory: string,
+  page: Page,
+  integration: Integration
+) {
   console.log("Navigating to chapter...");
   await page.goto(chapter.url);
   await page.waitForLoadState("networkidle");
@@ -28,27 +33,34 @@ async function runner(chapter: Chapter, page: Page, integration: Integration) {
 
   console.log(`Found ${imageUrls.length} images meeting size requirements.`);
 
+  if (imageUrls.length === 0) {
+    console.log("No images found, skipping...");
+    throw new Error("No images found");
+  }
+
   console.log("Feeding into queue...");
-  const imageQueue = new Queue<Chapter>();
+  const imageQueue = new Queue<ChapterImage>();
   for (const [index, url] of imageUrls.entries()) {
-    imageQueue.enqueue({ url, index, name: `page-${index}` });
+    imageQueue.enqueue({
+      url,
+      index,
+      name: chapter.name,
+      imageName: `page-${index}`,
+    });
   }
 
   try {
     const existingFiles = await readdir(integration.environment.outDir);
     if (imageQueue.size() === existingFiles.length) {
       console.log("All images already downloaded.");
-      await page.close();
       return;
     }
 
-    await downloadImagesParallel(imageQueue, integration.environment.outDir);
+    await downloadImagesParallel(imageQueue, directory, integration);
     console.log("All downloads completed successfully!");
   } catch (error) {
     console.error("Error in main:", error);
     throw error;
-  } finally {
-    await page.close();
   }
 }
 
@@ -86,8 +98,9 @@ async function getAllChapters(page: Page, integration: Integration) {
 }
 
 async function downloadImagesParallel(
-  imageQueue: Queue<Chapter>,
-  directory: string
+  imageQueue: Queue<ChapterImage>,
+  directory: string,
+  integration: Integration
 ) {
   // Makes device cpu's cores available
   const maxConcurrent =
@@ -104,7 +117,11 @@ async function downloadImagesParallel(
           continue;
         }
 
-        const promise = createImageDownloadWorker(chapter, directory)
+        const promise = createImageDownloadWorker(
+          chapter,
+          directory,
+          integration.environment
+        )
           .then((filename) => {
             active.delete(promise);
             console.log(`Downloaded: ${filename}`);
@@ -163,7 +180,7 @@ async function main(integration: Integration) {
   await upsertDir(directory);
 
   for (const chapter of chapters) {
-    await runner(chapter, page, integration);
+    await runner(chapter, directory, page, integration);
   }
 
   await context.close();
@@ -221,7 +238,7 @@ try {
           const urlPathName = await aTag.getAttribute("href");
           const name = await aTag.innerText();
 
-          const url = `${integration.environment.baseURL}/${urlPathName}`;
+          const url = `${integration.environment.baseURL}/series/${urlPathName}`;
 
           chapters.push({
             url: url || "",

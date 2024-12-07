@@ -3,3 +3,7 @@ export type Chapter = {
   index: number;
   name: string;
 };
+
+export type ChapterImage = Chapter & {
+  imageName: string;
+};

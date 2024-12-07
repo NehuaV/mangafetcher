@@ -1,9 +1,10 @@
 import { stat, mkdir } from "fs/promises";
 import { Worker } from "worker_threads";
 import path from "path";
-import type { Chapter } from "./lib/types";
+import type { ChapterImage } from "./lib/types";
 import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
 import { firefox } from "playwright";
+import type { Environment, Integration } from "./drivers";
 
 export async function upsertDir(dir: string) {
   try {
@@ -14,8 +15,9 @@ export async function upsertDir(dir: string) {
 }
 
 export function createImageDownloadWorker(
-  chapter: Chapter,
-  directory: string
+  chapter: ChapterImage,
+  directory: string,
+  environment: Environment
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const worker = new Worker(path.join(__dirname, "worker.ts"));
@@ -29,13 +31,17 @@ export function createImageDownloadWorker(
     });
 
     worker.on("error", reject);
-    worker.postMessage({ chapter, directory });
+    worker.postMessage({
+      chapter,
+      directory,
+      environment,
+    });
   });
 }
 
 export async function createBrowser() {
   const browser = await firefox.launch({
-    headless: true,
+    headless: false,
   });
   const context = await browser.newContext();
 
