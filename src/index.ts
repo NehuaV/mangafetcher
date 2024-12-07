@@ -1,4 +1,4 @@
-import { firefox, type BrowserContext } from "playwright";
+import { firefox, type BrowserContext, type Page } from "playwright";
 import { readdir } from "fs/promises";
 import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
 import { createImageDownloadWorker, upsertDir } from "./utils";
@@ -19,15 +19,8 @@ async function main(
     imagesDir: "./images",
   }
 ) {
-  const targetUrlPaths = new URL(targetUrl).pathname.split("/").slice(2, 5);
-  const len = targetUrlPaths.length;
-  targetUrlPaths[len - 2] = targetUrlPaths[len - 2] + targetUrlPaths[len - 1];
-  targetUrlPaths.pop();
-  const fullPath = targetUrlPaths.join("/");
-
-  const directory = `${options.imagesDir}/${fullPath}`;
-  console.log("Upserting directory:", directory);
-  await upsertDir(directory);
+  console.log("Upserting image directory...");
+  await upsertDir(options.imagesDir);
 
   // Setup the ad blocker
   const blocker = await PlaywrightBlocker.fromLists(fetch, [
@@ -37,11 +30,18 @@ async function main(
   ]);
 
   const page = await context.newPage();
+  page.setDefaultTimeout(1000);
   await blocker.enableBlockingInPage(page);
 
   console.log("Navigating to page...");
   await page.goto(targetUrl);
   await page.waitForLoadState("networkidle");
+
+  console.log("Determining manga name...");
+  const directory = await determineMangaName(page, options.imagesDir);
+
+  console.log("Upserting directory:", directory);
+  await upsertDir(directory);
 
   console.log("Extracting image URLs...");
 
@@ -79,6 +79,29 @@ async function main(
   } finally {
     await page.close();
   }
+}
+
+async function determineMangaName(page: Page, imagesDir: string) {
+  // Use heading if available
+  const headings = ["h1", "h2"];
+
+  for (const heading of headings) {
+    const headingText = await page
+      .locator(heading)
+      .nth(0)
+      .innerText()
+      .catch(() => null);
+
+    if (headingText) {
+      return `${imagesDir}/${headingText}`;
+    }
+  }
+
+  // Otherwise, use first two path parameters of the URL
+  const targetUrlPaths = new URL(page.url()).pathname.split("/").slice(0, 3);
+  const fullPath = targetUrlPaths.join("-");
+
+  return `${imagesDir}/${fullPath}`;
 }
 
 async function downloadImagesParallel(
