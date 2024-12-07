@@ -11,7 +11,7 @@ type Options = {
   imagesDir: string; // Directory to save images
 };
 
-async function main(
+async function runner(
   targetUrl: string,
   context: BrowserContext,
   options: Options = {
@@ -171,7 +171,7 @@ try {
   const context = await browser.newContext();
 
   for (const chapter of chapterarr) {
-    await main(chapter, context, {
+    await runner(chapter, context, {
       scopeSelector: "//html/body/div[3]/div/div/div/div[5]/div",
       imagesDir: "./images",
     });
