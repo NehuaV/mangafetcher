@@ -7,7 +7,7 @@ import {
   CreateIntegration,
   CreateEnvironment,
   type Integration,
-} from "./drivers";
+} from "./integrations";
 import type { Chapter, ChapterImage } from "./lib/types";
 
 async function runner(

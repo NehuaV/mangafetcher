@@ -4,7 +4,7 @@ import path from "path";
 import type { ChapterImage } from "./lib/types";
 import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
 import { firefox } from "playwright";
-import type { Environment, Integration } from "./drivers";
+import type { Environment, Integration } from "./integrations";
 
 export async function upsertDir(dir: string) {
   try {

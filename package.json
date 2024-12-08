@@ -3,6 +3,8 @@
   "module": "src/index.ts",
   "type": "module",
   "scripts": {
+    "generate-integration-types": "bun run _integrationGen.ts",
+    "prepare": "bun run generate-integration-types",
     "start": "bun run src/index.ts"
   },
   "devDependencies": {

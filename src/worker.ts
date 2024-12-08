@@ -1,7 +1,7 @@
 import { parentPort } from "worker_threads";
 import sharp from "sharp";
 import type { Chapter, ChapterImage } from "./lib/types";
-import type { Environment, Integration } from "./drivers";
+import type { Environment, Integration } from "./integrations";
 import { upsertDir } from "./utils";
 
 if (!parentPort) {
