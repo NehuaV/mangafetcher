@@ -1,5 +1,6 @@
 import type { Chapter } from "@/lib/types";
 import type { Page } from "playwright";
+import type { IntegrationType } from "./integration";
 
 export type Environment = {
   outDir: string;
@@ -13,7 +14,7 @@ export type Environment = {
 export function CreateEnvironment(environment: Partial<Environment>) {
   const defaultEnvironment: Environment = {
     outDir: "./images",
-    baseURL: "https://asuracomic.net",
+    baseURL: "",
     pathToSeries: "",
     scopeSelector: "",
     titleSelectors: [],
@@ -22,10 +23,9 @@ export function CreateEnvironment(environment: Partial<Environment>) {
   return { ...defaultEnvironment, ...environment };
 }
 
-// TODO: Make a typed union of all drivers
 export type Integration = {
   environment: Environment;
-  type: "asuracomic" | "mangakakalot";
+  type: IntegrationType;
   titleFinder: (page: Page) => Promise<string>;
   chaptersFinder: (page: Page) => Promise<Chapter[]>;
 };
@@ -36,9 +36,28 @@ export function CreateIntegration(
 ) {
   const defaultIntegration: Integration = {
     environment,
-    type: "asuracomic",
+    type: "",
     titleFinder: async (page: Page) => "",
     chaptersFinder: async (page: Page) => [],
   };
   return { ...defaultIntegration, ...integration };
 }
+
+export const IntegrationFactory =
+  (type: IntegrationType) =>
+  async (overrides: {
+    environment: Partial<Environment> & { pathToSeries: string };
+    integration: Partial<Integration>;
+  }): Promise<Integration> => {
+    const implementationPath = `./implementations/${type}`;
+
+    try {
+      const { createIntegration } = await import(implementationPath);
+      const integration: Integration = createIntegration(overrides || {});
+      return integration;
+    } catch (error) {
+      throw new Error(
+        `Failed to load integration implementation for type "${type}": ${(error as Error).message}`
+      );
+    }
+  };

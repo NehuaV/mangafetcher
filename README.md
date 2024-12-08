@@ -47,4 +47,4 @@ bun start
    2. ~~Fetch title from main page~~
    3. Set chapter range
 3. export to different formats
-4. Make a generic interface/drivers that allow fetch from different sites
+4. ~~Make a generic interface/drivers that allow fetch from different sites~~

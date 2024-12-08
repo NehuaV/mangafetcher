@@ -1,13 +1,13 @@
 import { write } from "bun";
 import { readdir } from "fs/promises";
 
-const driverFiles = await readdir("./src/drivers/implementations");
-driverFiles.push("");
-const driverTypes = driverFiles
+const integrationFiles = await readdir("./src/integrations/implementations");
+integrationFiles.push("");
+const integrationTypes = integrationFiles
   .map((file) => file.split(".")[0])
   .map((type) => `"${type}"`)
   .join(" | ");
 
-const driverTypesFile = `export type DriverType = ${driverTypes};\n`;
+const integrationTypesFile = `export type IntegrationType = ${integrationTypes};\n`;
 
-await write("./src/integrations/integration.d.ts", driverTypesFile);
+await write("./src/integrations/integration.d.ts", integrationTypesFile);
