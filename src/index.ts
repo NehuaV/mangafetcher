@@ -1,7 +1,7 @@
 // import fetch from "cross-fetch"; // If bun poses problems, uncomment this & install
 import { readdir } from "fs/promises";
 import { type Page } from "playwright";
-import { createBrowser, createImageDownloadWorker } from "./utils";
+import { createBrowser, createImageDownloadWorker, upsertDir } from "./utils";
 import { Queue } from "./lib/queue";
 import { type Integration, IntegrationFactory } from "./integrations";
 import type { Chapter, ChapterImage } from "./lib/types";
@@ -47,6 +47,7 @@ async function runner(
 
   try {
     const chapterDir = `${directory}/${chapter.name}`;
+    await upsertDir(chapterDir);
     const existingFiles = await readdir(chapterDir);
     if (imageQueue.size() === existingFiles.length) {
       console.log("All images already downloaded.");
