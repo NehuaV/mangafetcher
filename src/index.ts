@@ -1,10 +1,11 @@
 // import fetch from "cross-fetch"; // If bun poses problems, uncomment this & install
 import { readdir } from "fs/promises";
 import { type Page } from "playwright";
-import { createBrowser, createImageDownloadWorker, upsertDir } from "./utils";
+import { createBrowser, upsertDir } from "./utils";
 import { Queue } from "./lib/queue";
 import { type Integration, IntegrationFactory } from "./integrations";
 import type { Chapter, ChapterImage } from "./lib/types";
+import sharp from "sharp";
 
 async function runner(
   chapter: Chapter,
@@ -54,8 +55,40 @@ async function runner(
       return;
     }
 
-    await downloadImagesParallel(imageQueue, chapterDir, integration);
-    console.log("All downloads completed successfully!");
+    // await downloadImagesParallel(imageQueue, chapterDir, integration);
+
+    await Promise.all(
+      imageQueue.expose().map(async (image) => {
+        console.log(
+          `Downloading image ${image.index + 1}/${imageQueue.size()}: ${image.url}`
+        );
+
+        try {
+          // 1. Using Playwright's request
+          const response = await page.request.get(image.url);
+
+          if (!response.ok()) {
+            console.error(
+              `Failed to download ${image.url}: ${response.status()} ${response.statusText()}`
+            );
+            return;
+          }
+
+          // Get the binary data
+          const buffer = await response.body();
+
+          // Determine a file name (e.g. image001.jpg)
+          const fileName = `page-${String(image.index)}`;
+          const filePath = `${chapterDir}/${fileName}`;
+
+          await sharp(buffer).withMetadata().webp().toFile(filePath);
+
+          console.log(`Saved ${fileName}`);
+        } catch (error) {
+          console.error(`Error downloading ${image.url}:`, error);
+        }
+      })
+    );
   } catch (error) {
     console.error("Error in main:", error);
     throw error;
@@ -93,72 +126,6 @@ async function getAllChapters(page: Page, integration: Integration) {
     throw new Error("No chapters found");
   }
   return chapters;
-}
-
-async function downloadImagesParallel(
-  imageQueue: Queue<ChapterImage>,
-  chapterDir: string,
-  integration: Integration
-) {
-  const maxConcurrent = Math.min(navigator.hardwareConcurrency - 1 || 1, 4); // Limit max concurrent downloads
-  const active = new Set<Promise<string | null>>();
-  const results: Promise<string | null>[] = [];
-  const retryQueue = new Queue<ChapterImage>();
-  const maxRetries = 3;
-
-  try {
-    while (imageQueue.size() > 0 || active.size > 0) {
-      while (imageQueue.size() > 0 && active.size < maxConcurrent) {
-        const chapter = imageQueue.dequeue()!;
-        if (!chapter.url.startsWith("http")) {
-          console.warn(`Skipping non-http image URL: ${chapter.url}`);
-          continue;
-        }
-
-        const promise = createImageDownloadWorker(
-          chapter,
-          chapterDir,
-          integration.environment
-        )
-          .then((filename) => {
-            active.delete(promise);
-            console.log(`Downloaded: ${filename}`);
-            return filename;
-          })
-          .catch((error) => {
-            active.delete(promise);
-            console.error(`Error downloading ${chapter.url}: ${error.message}`);
-
-            // Add to retry queue if under max retries
-            if ((chapter.retryCount || 0) < maxRetries) {
-              chapter.retryCount = (chapter.retryCount || 0) + 1;
-              retryQueue.enqueue(chapter);
-            }
-            return null;
-          });
-
-        active.add(promise);
-        results.push(promise);
-      }
-
-      if (active.size > 0) {
-        await Promise.race(active);
-      }
-    }
-
-    // Process retry queue
-    while (retryQueue.size() > 0) {
-      imageQueue.enqueue(retryQueue.dequeue()!);
-    }
-
-    // Wait for all results to resolve
-    await Promise.all(results);
-  } catch (error) {
-    console.error("Error in parallel download:", error);
-    throw error;
-  }
-
-  return (await Promise.all(results)).filter(Boolean);
 }
 
 async function main(integration: Integration) {
