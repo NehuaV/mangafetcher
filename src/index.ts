@@ -54,6 +54,7 @@ async function runner(
       return;
     }
 
+    console.log("Downloading images...", chapter.name);
     await downloadImages(imageQueue, chapterDir, page);
   } catch (error) {
     console.error("Error in main:", error);
@@ -66,36 +67,49 @@ async function downloadImages(
   chapterDir: string,
   page: Page
 ) {
-  const downloadPromises = imageQueue.map(async (image) => {
-    console.log(
-      `Downloading image ${image.index + 1}/${imageQueue.length}: ${image.url}`
-    );
+  const downloadPromises = imageQueue.map((image) => {
+    const downloadImage = async (retries = 3) => {
+      console.log(
+        `Downloading image ${image.index + 1}/${imageQueue.length}: ${image.url}`
+      );
 
-    try {
-      const response = await page.request.get(image.url);
+      try {
+        const response = await page.request.get(image.url);
 
-      if (!response.ok()) {
-        console.error(
-          `Failed to download ${image.url}: ${response.status()} ${response.statusText()}`
-        );
-        return;
+        if (!response.ok()) {
+          console.error(
+            `Failed to download ${image.url}: ${response.status()} ${response.statusText()}`
+          );
+          return;
+        }
+
+        // Get the binary data
+        const buffer = await response.body();
+
+        const fileName = `page-${String(image.index)}.webp`;
+        const filePath = `${chapterDir}/${fileName}`;
+
+        await sharp(buffer)
+          .withMetadata()
+          .webp({
+            effort: 6,
+          })
+          .toFile(filePath);
+
+        console.log(`Saved ${fileName}`);
+      } catch (error) {
+        console.error(`Error downloading ${image.url}:`, error);
+        if (retries > 0) {
+          console.log(`Retrying ${image.url}... (${3 - retries + 1})`);
+          await downloadImage(retries - 1);
+        }
       }
+    };
 
-      // Get the binary data
-      const buffer = await response.body();
-
-      const fileName = `page-${String(image.index)}.webp`;
-      const filePath = `${chapterDir}/${fileName}`;
-
-      await sharp(buffer).withMetadata().webp().toFile(filePath);
-
-      console.log(`Saved ${fileName}`);
-    } catch (error) {
-      console.error(`Error downloading ${image.url}:`, error);
-    }
+    return downloadImage();
   });
 
-  await Promise.all(downloadPromises);
+  await Promise.allSettled(downloadPromises);
 }
 
 async function getMangaName(page: Page, integration: Integration) {
