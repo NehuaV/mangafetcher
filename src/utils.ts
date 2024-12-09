@@ -14,6 +14,31 @@ export async function upsertDir(dir: string) {
   }
 }
 
+function createImageDownloadWorker(
+  chapter: ChapterImage,
+  chapterDir: string,
+  environment: Environment
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(path.join(__dirname, "worker.ts"));
+
+    worker.on("message", (message) => {
+      if (message.success) {
+        resolve(message.filename);
+      } else {
+        reject(new Error(message.error));
+      }
+    });
+
+    worker.on("error", reject);
+    worker.postMessage({
+      chapter,
+      chapterDir,
+      environment,
+    });
+  });
+}
+
 export async function createBrowser() {
   const browser = await firefox.launch({
     headless: true,
