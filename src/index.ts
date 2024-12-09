@@ -2,7 +2,6 @@
 import { readdir } from "fs/promises";
 import { type Page } from "playwright";
 import { createBrowser, upsertDir } from "./utils";
-import { Queue } from "./lib/queue";
 import { type Integration, IntegrationFactory } from "./integrations";
 import type { Chapter, ChapterImage } from "./lib/types";
 import sharp from "sharp";
@@ -36,9 +35,9 @@ async function runner(
   }
 
   console.log("Feeding into queue...");
-  const imageQueue = new Queue<ChapterImage>();
+  const imageQueue: ChapterImage[] = [];
   for (const [index, url] of imageUrls.entries()) {
-    imageQueue.enqueue({
+    imageQueue.push({
       url,
       index,
       name: chapter.name,
@@ -50,49 +49,53 @@ async function runner(
     const chapterDir = `${directory}/${chapter.name}`;
     await upsertDir(chapterDir);
     const existingFiles = await readdir(chapterDir);
-    if (imageQueue.size() === existingFiles.length) {
+    if (imageQueue.length === existingFiles.length) {
       console.log("All images already downloaded.");
       return;
     }
 
-    // await downloadImagesParallel(imageQueue, chapterDir, integration);
-
-    await Promise.all(
-      imageQueue.expose().map(async (image) => {
-        console.log(
-          `Downloading image ${image.index + 1}/${imageQueue.size()}: ${image.url}`
-        );
-
-        try {
-          // 1. Using Playwright's request
-          const response = await page.request.get(image.url);
-
-          if (!response.ok()) {
-            console.error(
-              `Failed to download ${image.url}: ${response.status()} ${response.statusText()}`
-            );
-            return;
-          }
-
-          // Get the binary data
-          const buffer = await response.body();
-
-          // Determine a file name (e.g. image001.jpg)
-          const fileName = `page-${String(image.index)}`;
-          const filePath = `${chapterDir}/${fileName}`;
-
-          await sharp(buffer).withMetadata().webp().toFile(filePath);
-
-          console.log(`Saved ${fileName}`);
-        } catch (error) {
-          console.error(`Error downloading ${image.url}:`, error);
-        }
-      })
-    );
+    await downloadImages(imageQueue, chapterDir, page);
   } catch (error) {
     console.error("Error in main:", error);
     throw error;
   }
+}
+
+async function downloadImages(
+  imageQueue: ChapterImage[],
+  chapterDir: string,
+  page: Page
+) {
+  const downloadPromises = imageQueue.map(async (image) => {
+    console.log(
+      `Downloading image ${image.index + 1}/${imageQueue.length}: ${image.url}`
+    );
+
+    try {
+      const response = await page.request.get(image.url);
+
+      if (!response.ok()) {
+        console.error(
+          `Failed to download ${image.url}: ${response.status()} ${response.statusText()}`
+        );
+        return;
+      }
+
+      // Get the binary data
+      const buffer = await response.body();
+
+      const fileName = `page-${String(image.index)}.webp`;
+      const filePath = `${chapterDir}/${fileName}`;
+
+      await sharp(buffer).withMetadata().webp().toFile(filePath);
+
+      console.log(`Saved ${fileName}`);
+    } catch (error) {
+      console.error(`Error downloading ${image.url}:`, error);
+    }
+  });
+
+  await Promise.all(downloadPromises);
 }
 
 async function getMangaName(page: Page, integration: Integration) {
