@@ -8,6 +8,7 @@ export function CreateEnvironment(environment: Partial<Environment>) {
     baseURL: "",
     fileType: "webp",
     fileCompressionLevel: 6,
+    chapterRange: [1, 100],
 
     pathToSeries: "",
     scopeSelector: "",

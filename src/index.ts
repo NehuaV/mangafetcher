@@ -96,7 +96,7 @@ async function downloadImages(
 
         await sharp(buffer)
           .withMetadata()
-          [integration.environment.fileType]({
+          [integration.environment.fileType!]({
             effort: integration.environment.fileCompressionLevel,
           })
           .toFile(filePath);
@@ -136,6 +136,32 @@ async function main(integration: Integration) {
   console.log("Getting all chapters...");
   const chapters = await getAllChapters(page, integration);
 
+  // Chapter range validation
+  const chapterRange = integration.environment.chapterRange;
+  if (chapterRange.length !== 2) {
+    throw new Error("Chapter range must be an array of two numbers.");
+  }
+
+  if (chapterRange[0] > chapterRange[1]) {
+    throw new Error("First chapter must be less than last chapter.");
+  }
+
+  if (chapterRange[0] < 1) {
+    throw new Error("First chapter must be greater than 1.");
+  }
+
+  // Remove chapters outside of range
+  for (const chapter of [...chapters]) {
+    if (
+      chapter.index < chapterRange[0] - 1 ||
+      chapter.index > chapterRange[1] - 1
+    ) {
+      chapters.splice(chapters.indexOf(chapter), 1);
+    }
+  }
+
+  console.log(`Found ${chapters.length} chapters in range.`);
+
   // check if chapter dir exists, if it does, remove from chapters
   for (const chapter of [...chapters]) {
     const chapterDir = `${directory}/${chapter.name}`;
@@ -159,6 +185,7 @@ try {
   const integration = await IntegrationFactory("asuracomic.net")({
     pathToSeries: "/series/light-of-arad-forerunner-89592507",
     outDir: "./images",
+    chapterRange: [1, 25],
   });
 
   await main(integration);

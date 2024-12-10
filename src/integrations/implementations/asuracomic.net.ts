@@ -15,6 +15,7 @@ export const createIntegration = (params: IntegrationParams): Integration => {
     outDir: params.outDir || "./images",
     fileType: params.file?.fileType || "webp",
     fileCompressionLevel: params.file?.fileCompressionLevel || 6,
+    chapterRange: params.chapterRange,
 
     baseURL: baseURL,
     scopeSelector: "//html/body/div[3]/div/div/div/div[5]",

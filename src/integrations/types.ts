@@ -7,6 +7,7 @@ export type FileType = "jpeg" | "png" | "webp" | "avif";
 export type IntegrationParams = {
   pathToSeries: string;
   outDir: string;
+  chapterRange: [number, number];
 
   file?: {
     fileType?: FileType;
@@ -26,6 +27,7 @@ export type Environment = {
   baseURL: string;
   fileType: FileType;
   fileCompressionLevel: number;
+  chapterRange: [number, number];
 
   pathToSeries: string;
   scopeSelector: string;
