@@ -46,8 +46,7 @@ bun start
    1. ~~Fetch urls of chapters~~
    2. ~~Fetch title from main page~~
    3. Set chapter range
-3. export to different formats
+3. ~~export to different formats~~
 4. ~~Make a generic interface/drivers that allow fetch from different sites~~
-5. Use typescript file name as integration baseurl
-6. Contain environment & integration separate in "Context" object
-7. Use workers to spin up more playwright pages rather than image compression.
+5. ~~Use typescript file name as integration baseurl~~
+6. Use workers to spin up more playwright pages rather than image compression.
