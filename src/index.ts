@@ -1,8 +1,8 @@
-// import fetch from "cross-fetch"; // If bun poses problems, uncomment this & install
-import { readdir } from "fs/promises";
 import { type Page } from "playwright";
+import { readdir, exists } from "fs/promises";
 import { createBrowser, upsertDir } from "./utils";
-import { type Integration, IntegrationFactory } from "./integrations";
+import { IntegrationFactory } from "./integrations";
+import type { Integration } from "./integrations/types";
 import type { Chapter, ChapterImage } from "./lib/types";
 import sharp from "sharp";
 
@@ -28,9 +28,8 @@ async function runner(
     });
 
   console.log(`Found ${imageUrls.length} images meeting size requirements.`);
-
   if (imageUrls.length === 0) {
-    console.log("No images found, skipping...");
+    console.error("No images found, skipping...");
     throw new Error("No images found");
   }
 
@@ -45,26 +44,21 @@ async function runner(
     });
   }
 
-  try {
-    const chapterDir = `${directory}/${chapter.name}`;
-    await upsertDir(chapterDir);
-    const existingFiles = await readdir(chapterDir);
-    if (imageQueue.length === existingFiles.length) {
-      console.log("All images already downloaded.");
-      return;
-    }
+  const chapterDir = `${directory}/${chapter.name}`;
+  await upsertDir(chapterDir);
 
-    console.log("Downloading images...", chapter.name);
-
-    const imagesPack = {
-      imageQueue,
-      chapterDir,
-    };
-    await downloadImages(imagesPack, page);
-  } catch (error) {
-    console.error("Error in main:", error);
-    throw error;
+  const existingFiles = await readdir(chapterDir);
+  if (imageQueue.length === existingFiles.length) {
+    console.warn("All images already downloaded.");
+    return;
   }
+
+  const imagesPack = {
+    imageQueue,
+    chapterDir,
+  };
+  console.log("Downloading images...", chapter.name);
+  await downloadImages(imagesPack, page);
 }
 
 type ImagesPack = {
@@ -170,6 +164,17 @@ async function main(integration: Integration) {
   console.log("Getting all chapters...");
   const chapters = await getAllChapters(page, integration);
 
+  // check if chapter dir exists, if it does, remove from chapters
+  for (const chapter of [...chapters]) {
+    const chapterDir = `${directory}/${chapter.name}`;
+    const dirExists = await exists(chapterDir);
+
+    if (!dirExists) continue;
+
+    console.log(`Chapter ${chapter.name} already exists, skipping...`);
+    chapters.splice(chapters.indexOf(chapter), 1);
+  }
+
   for (const chapter of chapters) {
     await runner(chapter, directory, page, integration);
   }
@@ -179,11 +184,9 @@ async function main(integration: Integration) {
 }
 
 try {
-  const integration = await IntegrationFactory("asuracomic")({
-    environment: {
-      pathToSeries: "/series/light-of-arad-forerunner-89592507",
-    },
-    integration: {},
+  const integration = await IntegrationFactory("asuracomic.net")({
+    pathToSeries: "/series/light-of-arad-forerunner-89592507",
+    outDir: "./images",
   });
 
   await main(integration);
