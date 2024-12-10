@@ -48,3 +48,6 @@ bun start
    3. Set chapter range
 3. export to different formats
 4. ~~Make a generic interface/drivers that allow fetch from different sites~~
+5. Use typescript file name as integration baseurl
+6. Contain environment & integration separate in "Context" object
+7. Use workers to spin up more playwright pages rather than image compression.

@@ -55,22 +55,28 @@ async function runner(
     }
 
     console.log("Downloading images...", chapter.name);
-    await downloadImages(imageQueue, chapterDir, page);
+
+    const imagesPack = {
+      imageQueue,
+      chapterDir,
+    };
+    await downloadImages(imagesPack, page);
   } catch (error) {
     console.error("Error in main:", error);
     throw error;
   }
 }
 
-async function downloadImages(
-  imageQueue: ChapterImage[],
-  chapterDir: string,
-  page: Page
-) {
-  const downloadPromises = imageQueue.map((image) => {
+type ImagesPack = {
+  imageQueue: ChapterImage[];
+  chapterDir: string;
+};
+
+async function downloadImages(imagePack: ImagesPack, page: Page) {
+  const downloadPromises = imagePack.imageQueue.map((image) => {
     const downloadImage = async (retries = 3) => {
       console.log(
-        `Downloading image ${image.index + 1}/${imageQueue.length}: ${image.url}`
+        `Downloading image ${image.index + 1}/${imagePack.imageQueue.length}: ${image.url}`
       );
 
       try {
@@ -87,7 +93,7 @@ async function downloadImages(
         const buffer = await response.body();
 
         const fileName = `page-${String(image.index)}.webp`;
-        const filePath = `${chapterDir}/${fileName}`;
+        const filePath = `${imagePack.chapterDir}/${fileName}`;
 
         await sharp(buffer)
           .withMetadata()
