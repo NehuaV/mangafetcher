@@ -5,7 +5,7 @@
   "scripts": {
     "generate-integration-types": "bun run _integrationGen.ts",
     "prepare": "bun run generate-integration-types",
-    "start": "bun run src/index.ts",
+    "start": "bun run src/try.ts",
     "build": "tsup --config tsup.config.ts ./src/index.ts"
   },
   "devDependencies": {
