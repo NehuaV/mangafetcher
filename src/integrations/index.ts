@@ -1,15 +1,12 @@
 import type { Chapter } from "@/lib/types";
 import type { Page } from "playwright";
 import type { IntegrationType } from "./integration";
-
-export type Environment = {
-  outDir: string;
-  baseURL: string;
-  pathToSeries: string;
-  scopeSelector: string;
-  titleSelectors: string[];
-  chaptersSelectors: string[];
-};
+import type {
+  Environment,
+  Integration,
+  IntegrationOverrides,
+  IntegrationParams,
+} from "./types";
 
 export function CreateEnvironment(environment: Partial<Environment>) {
   const defaultEnvironment: Environment = {
@@ -22,13 +19,6 @@ export function CreateEnvironment(environment: Partial<Environment>) {
   };
   return { ...defaultEnvironment, ...environment };
 }
-
-export type Integration = {
-  environment: Environment;
-  type: IntegrationType;
-  titleFinder: (page: Page) => Promise<string>;
-  chaptersFinder: (page: Page) => Promise<Chapter[]>;
-};
 
 export function CreateIntegration(
   environment: Environment,
@@ -45,15 +35,15 @@ export function CreateIntegration(
 
 export const IntegrationFactory =
   (type: IntegrationType) =>
-  async (overrides: {
-    environment: Partial<Environment> & { pathToSeries: string };
-    integration: Partial<Integration>;
-  }): Promise<Integration> => {
+  async (
+    params: IntegrationParams,
+    overrides?: IntegrationOverrides
+  ): Promise<Integration> => {
     const implementationPath = `./implementations/${type}`;
 
     try {
       const { createIntegration } = await import(implementationPath);
-      const integration: Integration = createIntegration(overrides || {});
+      const integration: Integration = createIntegration(params, overrides);
       return integration;
     } catch (error) {
       throw new Error(

@@ -1,15 +1,26 @@
 import type { Chapter } from "@/lib/types";
-import { type Environment, type Integration } from "../index";
 import type { Page } from "playwright";
+import type {
+  Environment,
+  Integration,
+  IntegrationOverrides,
+  IntegrationParams,
+} from "../types";
+import { fileURLToPath } from "url";
+import path from "path";
 
-export const createIntegration = (overrides: {
-  environment?: Partial<Environment>;
-  integration?: Partial<Integration>;
-}): Integration => {
+export const createIntegration = (
+  params: IntegrationParams,
+  overrides?: IntegrationOverrides
+): Integration => {
+  const filename = fileURLToPath(import.meta.url);
+  const baseURL = `https://${path.basename(filename, ".ts")}`;
+
   const environment: Environment = {
-    baseURL: "https://asuracomic.net",
-    pathToSeries: "",
-    outDir: "./images",
+    pathToSeries: params.pathToSeries,
+    outDir: params.outDir || "./images",
+
+    baseURL: baseURL,
     scopeSelector: "//html/body/div[3]/div/div/div/div[5]",
     titleSelectors: [
       "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[1]/div[2]/div[1]/span",
@@ -17,12 +28,12 @@ export const createIntegration = (overrides: {
     chaptersSelectors: [
       "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]",
     ],
-    ...overrides.environment,
+    ...overrides?.environment,
   };
 
   const integration: Integration = {
     environment,
-    type: "asuracomic",
+    type: "asuracomic.net",
     titleFinder: async (page: Page) => {
       const xpaths = environment.titleSelectors;
 
@@ -73,7 +84,7 @@ export const createIntegration = (overrides: {
       return chapters;
     },
 
-    ...overrides.integration,
+    ...overrides?.integration,
   };
 
   return integration;
