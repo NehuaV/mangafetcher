@@ -5,7 +5,8 @@
   "scripts": {
     "generate-integration-types": "bun run _integrationGen.ts",
     "prepare": "bun run generate-integration-types",
-    "start": "bun run src/index.ts"
+    "start": "bun run src/index.ts",
+    "build": "tsup --config tsup.config.ts ./src/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -16,6 +17,7 @@
   "dependencies": {
     "@cliqz/adblocker-playwright": "^1.34.0",
     "playwright": "^1.49.0",
-    "sharp": "^0.33.5"
+    "sharp": "^0.33.5",
+    "tsup": "^8.3.5"
   }
 }
