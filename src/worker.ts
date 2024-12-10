@@ -1,8 +1,8 @@
 import { parentPort } from "worker_threads";
 import sharp from "sharp";
 import type { Chapter, ChapterImage } from "./lib/types";
-import type { Environment, Integration } from "./integrations";
 import { upsertDir } from "./utils";
+import type { Environment } from "./integrations/types";
 
 if (!parentPort) {
   throw new Error("parentPort is not available");

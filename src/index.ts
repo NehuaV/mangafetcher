@@ -5,6 +5,7 @@ import { IntegrationFactory } from "./integrations";
 import type { Integration } from "./integrations/types";
 import type { Chapter, ChapterImage } from "./lib/types";
 import sharp from "sharp";
+import { getMangaName, getAllChapters } from "./utils";
 
 async function runner(
   chapter: Chapter,
@@ -58,7 +59,7 @@ async function runner(
     chapterDir,
   };
   console.log("Downloading images...", chapter.name);
-  await downloadImages(imagesPack, page);
+  await downloadImages(imagesPack, page, integration);
 }
 
 type ImagesPack = {
@@ -66,7 +67,11 @@ type ImagesPack = {
   chapterDir: string;
 };
 
-async function downloadImages(imagePack: ImagesPack, page: Page) {
+async function downloadImages(
+  imagePack: ImagesPack,
+  page: Page,
+  integration: Integration
+) {
   const downloadPromises = imagePack.imageQueue.map((image) => {
     const downloadImage = async (retries = 3) => {
       console.log(
@@ -86,13 +91,13 @@ async function downloadImages(imagePack: ImagesPack, page: Page) {
         // Get the binary data
         const buffer = await response.body();
 
-        const fileName = `page-${String(image.index)}.webp`;
+        const fileName = `page-${String(image.index)}.${integration.environment.fileType}`;
         const filePath = `${imagePack.chapterDir}/${fileName}`;
 
         await sharp(buffer)
           .withMetadata()
-          .webp({
-            effort: 6,
+          [integration.environment.fileType]({
+            effort: integration.environment.fileCompressionLevel,
           })
           .toFile(filePath);
 
@@ -110,39 +115,6 @@ async function downloadImages(imagePack: ImagesPack, page: Page) {
   });
 
   await Promise.allSettled(downloadPromises);
-}
-
-async function getMangaName(page: Page, integration: Integration) {
-  page.setDefaultTimeout(1_000);
-  const mangaName = await integration.titleFinder(page);
-  page.setDefaultTimeout(30_000);
-
-  if (mangaName) {
-    const newMangaName = mangaName.toLowerCase();
-    console.log("Using manga name:", mangaName);
-    console.log("Converted manga name:", newMangaName);
-    return `${integration.environment.outDir}/${newMangaName}`;
-  }
-
-  // Otherwise, use first two path parameters of the URL
-  const targetUrlPaths = new URL(page.url()).pathname
-    .split("/")
-    .filter(Boolean)
-    .join("-");
-
-  console.log("Using target URL paths:", targetUrlPaths);
-  return `${integration.environment.outDir}/${targetUrlPaths}`;
-}
-
-async function getAllChapters(page: Page, integration: Integration) {
-  page.setDefaultTimeout(1_000);
-  const chapters = await integration.chaptersFinder(page);
-  page.setDefaultTimeout(30_000);
-
-  if (chapters.length === 0) {
-    throw new Error("No chapters found");
-  }
-  return chapters;
 }
 
 async function main(integration: Integration) {

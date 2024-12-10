@@ -1,24 +1,20 @@
 import type { Chapter } from "@/lib/types";
 import type { Page } from "playwright";
-import type {
-  Environment,
-  Integration,
-  IntegrationOverrides,
-  IntegrationParams,
-} from "../types";
+import type { Environment, Integration, IntegrationParams } from "../types";
 import { fileURLToPath } from "url";
 import path from "path";
+import { CreateEnvironment, CreateIntegration } from "..";
 
-export const createIntegration = (
-  params: IntegrationParams,
-  overrides?: IntegrationOverrides
-): Integration => {
+export const createIntegration = (params: IntegrationParams): Integration => {
   const filename = fileURLToPath(import.meta.url);
   const baseURL = `https://${path.basename(filename, ".ts")}`;
 
   const environment: Environment = {
+    ...CreateEnvironment({}),
     pathToSeries: params.pathToSeries,
     outDir: params.outDir || "./images",
+    fileType: params.file?.fileType || "webp",
+    fileCompressionLevel: params.file?.fileCompressionLevel || 6,
 
     baseURL: baseURL,
     scopeSelector: "//html/body/div[3]/div/div/div/div[5]",
@@ -28,10 +24,10 @@ export const createIntegration = (
     chaptersSelectors: [
       "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]",
     ],
-    ...overrides?.environment,
   };
 
   const integration: Integration = {
+    ...CreateIntegration(environment, {}),
     environment,
     type: "asuracomic.net",
     titleFinder: async (page: Page) => {
@@ -83,8 +79,6 @@ export const createIntegration = (
 
       return chapters;
     },
-
-    ...overrides?.integration,
   };
 
   return integration;

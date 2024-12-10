@@ -1,17 +1,14 @@
-import type { Chapter } from "@/lib/types";
 import type { Page } from "playwright";
 import type { IntegrationType } from "./integration";
-import type {
-  Environment,
-  Integration,
-  IntegrationOverrides,
-  IntegrationParams,
-} from "./types";
+import type { Environment, Integration, IntegrationParams } from "./types";
 
 export function CreateEnvironment(environment: Partial<Environment>) {
   const defaultEnvironment: Environment = {
     outDir: "./images",
     baseURL: "",
+    fileType: "webp",
+    fileCompressionLevel: 6,
+
     pathToSeries: "",
     scopeSelector: "",
     titleSelectors: [],
@@ -35,15 +32,12 @@ export function CreateIntegration(
 
 export const IntegrationFactory =
   (type: IntegrationType) =>
-  async (
-    params: IntegrationParams,
-    overrides?: IntegrationOverrides
-  ): Promise<Integration> => {
+  async (params: IntegrationParams): Promise<Integration> => {
     const implementationPath = `./implementations/${type}`;
 
     try {
       const { createIntegration } = await import(implementationPath);
-      const integration: Integration = createIntegration(params, overrides);
+      const integration: Integration = createIntegration(params);
       return integration;
     } catch (error) {
       throw new Error(

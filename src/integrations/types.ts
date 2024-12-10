@@ -2,14 +2,16 @@ import type { Page } from "playwright";
 import type { IntegrationType } from "./integration";
 import type { Chapter } from "@/lib/types";
 
+export type FileType = "jpeg" | "png" | "webp" | "avif";
+
 export type IntegrationParams = {
   pathToSeries: string;
   outDir: string;
-};
 
-export type IntegrationOverrides = {
-  environment?: Partial<Environment>;
-  integration?: Partial<Integration>;
+  file?: {
+    fileType?: FileType;
+    fileCompressionLevel?: number;
+  };
 };
 
 export type Integration = {
@@ -22,6 +24,9 @@ export type Integration = {
 export type Environment = {
   outDir: string;
   baseURL: string;
+  fileType: FileType;
+  fileCompressionLevel: number;
+
   pathToSeries: string;
   scopeSelector: string;
   titleSelectors: string[];
