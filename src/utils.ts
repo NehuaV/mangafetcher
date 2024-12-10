@@ -90,3 +90,12 @@ export async function createBrowser() {
 
   return { browser, context, page };
 }
+
+export async function exists(filePath: string) {
+  try {
+    await stat(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
