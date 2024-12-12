@@ -1,10 +1,7 @@
-import path from "path";
-import type { ChapterImage } from "./lib/types";
-import type { Environment, Integration } from "./integrations/types";
 import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
-import { Worker } from "worker_threads";
 import { firefox, type Page } from "playwright";
 import { stat, mkdir } from "fs/promises";
+import type { Integration } from "./integrations/types";
 
 export async function upsertDir(dir: string) {
   try {
