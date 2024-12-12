@@ -5,7 +5,7 @@ try {
   const integration = await IntegrationFactory("asuracomic.net")({
     pathToSeries: "/series/light-of-arad-forerunner-89592507",
     outDir: "./images",
-    chapterRange: [1, 25],
+    chapterRange: [1, 2],
   });
 
   await main(integration);
