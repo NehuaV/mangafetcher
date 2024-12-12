@@ -47,8 +47,36 @@ export async function getAllChapters(page: Page, integration: Integration) {
 export async function createBrowser() {
   const browser = await firefox.launch({
     headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-accelerated-2d-canvas",
+      "--disable-gpu",
+    ],
   });
-  const context = await browser.newContext();
+
+  const context = await browser.newContext({
+    javaScriptEnabled: true,
+    userAgent:
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    viewport: {
+      width: 2560,
+      height: 1440,
+    },
+    deviceScaleFactor: 1,
+    isMobile: false,
+    hasTouch: false,
+    bypassCSP: true,
+    ignoreHTTPSErrors: true,
+    locale: "en-US",
+    timezoneId: "America/New_York",
+    geolocation: { longitude: -73.935242, latitude: 40.73061 },
+    permissions: ["geolocation"],
+    offline: false,
+    // httpCredentials: undefined,
+    colorScheme: "light",
+  });
 
   // Setup the ad blocker
   const blocker = await PlaywrightBlocker.fromLists(fetch, [

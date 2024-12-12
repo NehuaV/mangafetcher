@@ -15,15 +15,17 @@ async function runner(
 ) {
   console.log("Navigating to chapter...");
   await page.goto(chapter.url);
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
 
   console.log("Extracting image URLs...");
   const imageUrls = await page
     .locator(integration.environment.scopeSelector)
     .evaluate((element: Element): string[] => {
       const imgs = Array.from(element.querySelectorAll("img"));
+
       return imgs
         .filter((img) => img.naturalHeight > 512 && img.naturalWidth > 512)
+        .filter((img) => img.src.startsWith("https://"))
         .map((img) => img.src)
         .filter((src) => !!src);
     });
@@ -75,7 +77,9 @@ async function downloadImages(
   const downloadPromises = imagePack.imageQueue.map((image) => {
     const downloadImage = async (retries = 3) => {
       console.log(
-        `Downloading image ${image.index + 1}/${imagePack.imageQueue.length}: ${image.url}`
+        `Downloading image ${image.index + 1}/${imagePack.imageQueue.length}: ${
+          image.url
+        }`
       );
 
       try {
@@ -83,7 +87,9 @@ async function downloadImages(
 
         if (!response.ok()) {
           console.error(
-            `Failed to download ${image.url}: ${response.status()} ${response.statusText()}`
+            `Failed to download ${
+              image.url
+            }: ${response.status()} ${response.statusText()}`
           );
           return;
         }
@@ -91,13 +97,15 @@ async function downloadImages(
         // Get the binary data
         const buffer = await response.body();
 
-        const fileName = `page-${String(image.index)}.${integration.environment.fileType}`;
+        const fileName = `page-${String(image.index)}.${
+          integration.environment.fileType
+        }`;
         const filePath = `${imagePack.chapterDir}/${fileName}`;
 
         await sharp(buffer)
-          .withMetadata()
           [integration.environment.fileType!]({
             effort: integration.environment.fileCompressionLevel,
+            compressionLevel: 9,
           })
           .toFile(filePath);
 
@@ -128,7 +136,7 @@ export async function main(integration: Integration) {
   console.log("Navigating to page...");
   const targetUrl = `${integration.environment.baseURL}${integration.environment.pathToSeries}`;
   await page.goto(targetUrl);
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState("domcontentloaded");
 
   console.log("Determining manga name...");
   const directory = await getMangaName(page, integration);
