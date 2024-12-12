@@ -5,6 +5,11 @@ try {
   const integration = await IntegrationFactory("reaper-scans.com")({
     pathToSeries: "/series/return-of-the-mad/",
     outDir: "./images",
+    file: {
+      fileType: "jpeg",
+      fileEffort: 6,
+      fileCompressionLevel: 9,
+    },
     chapterRange: [1, 2],
   });
 

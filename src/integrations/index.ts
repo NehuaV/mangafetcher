@@ -7,7 +7,8 @@ export function CreateEnvironment(environment: Partial<Environment>) {
     outDir: "./images",
     baseURL: "",
     fileType: "webp",
-    fileCompressionLevel: 6,
+    fileEffort: 6,
+    fileCompressionLevel: 9,
     chapterRange: [1, 100],
 
     pathToSeries: "",
@@ -42,7 +43,9 @@ export const IntegrationFactory =
       return integration;
     } catch (error) {
       throw new Error(
-        `Failed to load integration implementation for type "${type}": ${(error as Error).message}`
+        `Failed to load integration implementation for type "${type}": ${
+          (error as Error).message
+        }`
       );
     }
   };

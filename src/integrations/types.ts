@@ -11,6 +11,7 @@ export type IntegrationParams = {
 
   file?: {
     fileType?: FileType;
+    fileEffort?: number;
     fileCompressionLevel?: number;
   };
 };
@@ -26,7 +27,16 @@ export type Environment = {
   outDir: string;
   baseURL: string;
   fileType: FileType;
+  /**
+   * 0-6 for webp/avif effort level
+   * 0-9 for jpeg/png quality level
+   */
+  fileEffort: number;
+  /**
+   * 0-9 for compression level
+   */
   fileCompressionLevel: number;
+
   chapterRange: [number, number];
 
   pathToSeries: string;

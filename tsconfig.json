@@ -31,5 +31,5 @@
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "exclude": ["_integrationGen.ts", "tsup.config.ts", "dist/**"]
+  "exclude": ["_integrationGen.ts", "tsup.config.ts", "dist/**", "_start.ts"]
 }

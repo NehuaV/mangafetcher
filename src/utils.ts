@@ -17,7 +17,12 @@ export async function getMangaName(page: Page, integration: Integration) {
   page.setDefaultTimeout(30_000);
 
   if (mangaName) {
-    const newMangaName = mangaName.toLowerCase();
+    // Replace special characters with white space, remove all double spaces
+    const newMangaName = mangaName
+      .replace(/[^a-zA-Z0-9]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
     console.log("Using manga name:", mangaName);
     console.log("Converted manga name:", newMangaName);
     return `${integration.environment.outDir}/${newMangaName}`;
