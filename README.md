@@ -50,3 +50,5 @@ bun start
 4. ~~Make a generic interface/drivers that allow fetch from different sites~~
 5. ~~Use typescript file name as integration baseurl~~
 6. ~~Install Playwright browser with bun install~~
+7. bundle browser?
+8. fix interface, should reflect sharp types
