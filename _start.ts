@@ -1,5 +1,5 @@
-import { main } from "./app";
-import { IntegrationFactory } from "./integrations";
+import { main } from "./src/app";
+import { IntegrationFactory } from "./src/integrations";
 
 try {
   const integration = await IntegrationFactory("asuracomic.net")({

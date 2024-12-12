@@ -5,8 +5,9 @@
   "scripts": {
     "generate-integration-types": "bun run _integrationGen.ts",
     "prepare": "bun run generate-integration-types",
-    "start": "bun run src/try.ts",
-    "build": "tsup --config tsup.config.ts ./src/index.ts"
+    "build": "tsup --config tsup.config.ts ./src/index.ts",
+    "postinstall": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install firefox",
+    "start": "PLAYWRIGHT_BROWSERS_PATH=0 bun run _start.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
