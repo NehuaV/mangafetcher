@@ -49,6 +49,4 @@ bun start
 3. ~~export to different formats~~
 4. ~~Make a generic interface/drivers that allow fetch from different sites~~
 5. ~~Use typescript file name as integration baseurl~~
-6. Use workers to spin up more playwright pages rather than image compression.
-7. Add a way to bundle and export as a library
-8. Install Playwright with bun install
+6. ~~Install Playwright browser with bun install~~
