@@ -5,11 +5,11 @@ try {
     URL: "https://asuracomic.net/series/the-return-of-the-crazy-demon-02189dcc",
     outDir: "./images",
     sharp: {
-      format: "jpeg",
+      format: "png",
       options: {
         quality: 80,
-        progressive: true,
-        chromaSubsampling: "4:4:4",
+        compressionLevel: 9,
+        effort: 10,
       },
     },
     chapterRange: [1, 2],

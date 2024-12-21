@@ -16,7 +16,7 @@ export const asuracomicNet = (params: IntegrationParams): Integration => {
     baseURL: url.origin,
     scopeSelector: "//html/body/div[3]/div/div/div/div[5]",
     titleSelectors: [
-      "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[1]/div[2]/div[1]/span",
+      "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/span",
     ],
     chaptersSelectors: [
       "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]",
@@ -62,7 +62,7 @@ export const asuracomicNet = (params: IntegrationParams): Integration => {
           // Get Inner a tag and its href attribute
           const aTag = element.locator("a");
           const urlPathName = await aTag.getAttribute("href");
-          const name = await aTag.innerText();
+          const name = await aTag.locator("h3").nth(0).innerText();
 
           const url = `${integration.environment.baseURL}/series/${urlPathName}`;
 
