@@ -1,23 +1,20 @@
 import type { Chapter } from "@/lib/types";
 import type { Page } from "playwright";
 import type { Environment, Integration, IntegrationParams } from "../types";
-import { fileURLToPath } from "url";
-import path from "path";
-import { CreateEnvironment, CreateIntegration } from "..";
+import { defaultEnvironment, defaultIntegration } from "..";
 
-export const createIntegration = (params: IntegrationParams): Integration => {
-  const filename = fileURLToPath(import.meta.url);
-  const baseURL = `https://${path.basename(filename, ".ts")}`;
+export const asuracomicNet = (params: IntegrationParams): Integration => {
+  const url = new URL(params.URL);
 
   const environment: Environment = {
-    ...CreateEnvironment({}),
-    pathToSeries: params.pathToSeries,
-    outDir: params.outDir || "./images",
+    ...defaultEnvironment,
+    pathToSeries: url.pathname,
+    outDir: params.outDir,
     fileType: params.file?.fileType || "webp",
     fileCompressionLevel: params.file?.fileCompressionLevel || 6,
     chapterRange: params.chapterRange,
 
-    baseURL: baseURL,
+    baseURL: url.origin,
     scopeSelector: "//html/body/div[3]/div/div/div/div[5]",
     titleSelectors: [
       "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[1]/div[2]/div[1]/span",
@@ -28,7 +25,7 @@ export const createIntegration = (params: IntegrationParams): Integration => {
   };
 
   const integration: Integration = {
-    ...CreateIntegration(environment, {}),
+    ...defaultIntegration,
     environment,
     type: "asuracomic.net",
     titleFinder: async (page: Page) => {

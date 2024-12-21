@@ -2,10 +2,9 @@ import { main } from "./app";
 import { IntegrationFactory } from "./integrations";
 import type { IntegrationType } from "./integrations/integration";
 import type { Integration, IntegrationParams } from "./integrations/types";
+
 export class CrawlFetcher {
-  private integrationFactory: (
-    params: IntegrationParams
-  ) => Promise<Integration>;
+  private integrationFactory: (params: IntegrationParams) => Integration;
   private integration: Integration | null;
 
   constructor(type: IntegrationType) {
@@ -13,15 +12,15 @@ export class CrawlFetcher {
     this.integration = null;
   }
 
-  async fetch(params: IntegrationParams) {
-    this.integration = await this.integrationFactory(params);
-    return this.integration;
+  fetch(params: IntegrationParams) {
+    this.integration = this.integrationFactory(params);
+    return this;
   }
 
   async start() {
     if (!this.integration) {
       throw new Error("Integration not found");
     }
-    return main(this.integration);
+    await main(this.integration);
   }
 }

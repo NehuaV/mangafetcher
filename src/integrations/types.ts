@@ -5,9 +5,10 @@ import type { Chapter } from "@/lib/types";
 export type FileType = "jpeg" | "png" | "webp" | "avif";
 
 export type IntegrationParams = {
-  pathToSeries: string;
   outDir: string;
   chapterRange: [number, number];
+
+  URL: string | URL;
 
   file?: {
     fileType?: FileType;
@@ -18,7 +19,7 @@ export type IntegrationParams = {
 
 export type Integration = {
   environment: Environment;
-  type: IntegrationType;
+  type: IntegrationType | "";
   titleFinder: (page: Page) => Promise<string>;
   chaptersFinder: (page: Page) => Promise<Chapter[]>;
 };

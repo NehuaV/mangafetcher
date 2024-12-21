@@ -1,9 +1,8 @@
-import { main } from "./src/app";
-import { IntegrationFactory } from "./src/integrations";
+import { CrawlFetcher } from "./src/index";
 
 try {
-  const integration = await IntegrationFactory("reaper-scans.com")({
-    pathToSeries: "/series/return-of-the-mad/",
+  const integration = new CrawlFetcher("asuracomic.net").fetch({
+    URL: "https://asuracomic.net/series/the-return-of-the-crazy-demon-02189dcc",
     outDir: "./images",
     file: {
       fileType: "jpeg",
@@ -13,7 +12,7 @@ try {
     chapterRange: [1, 2],
   });
 
-  await main(integration);
+  await integration.start();
 } catch (error) {
   console.error("Fatal error:", error);
   process.exit(1);
