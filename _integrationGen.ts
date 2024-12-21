@@ -5,7 +5,6 @@ const integrationFiles = await readdir("./src/integrations/implementations");
 
 const integrationTypes = integrationFiles
   .map((file) => file.split(".").slice(0, -1).join("."))
-  .filter((type) => type !== "index")
   .map((type) => `"${type}"`)
   .join(" | ");
 

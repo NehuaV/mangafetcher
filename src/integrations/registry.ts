@@ -1,7 +1,7 @@
-import type { IntegrationType } from "../integration";
-import type { Integration, IntegrationParams } from "../types";
-import { asuracomicNet } from "./asuracomic.net";
-import { reaperScansCom } from "./reaper-scans.com";
+import type { IntegrationType } from "./integration";
+import type { Integration, IntegrationParams } from "./types";
+import { asuracomicNet } from "./implementations/asuracomic.net";
+import { reaperScansCom } from "./implementations/reaper-scans.com";
 
 type IntegrationCreator = (params: IntegrationParams) => Integration;
 

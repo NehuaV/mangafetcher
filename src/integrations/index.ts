@@ -1,7 +1,7 @@
 import type { Page } from "playwright";
 import type { IntegrationType } from "./integration";
 import type { Environment, Integration, IntegrationParams } from "./types";
-import { getIntegration } from "./implementations";
+import { getIntegration } from "./registry";
 
 export const defaultEnvironment: Environment = {
   outDir: "./images",
