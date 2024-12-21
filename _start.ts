@@ -7,7 +7,7 @@ try {
     sharp: {
       format: "png",
       options: {
-        quality: 80,
+        quality: 90,
         compressionLevel: 9,
         effort: 10,
       },
