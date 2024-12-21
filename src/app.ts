@@ -15,7 +15,7 @@ async function runner(
 ) {
   console.log("Navigating to chapter...");
   await page.goto(chapter.url);
-  await page.waitForLoadState("domcontentloaded");
+  await page.waitForLoadState("networkidle");
 
   console.log("Extracting image URLs...");
   const imageUrls = await page
