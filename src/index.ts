@@ -3,7 +3,7 @@ import { IntegrationFactory } from "./integrations";
 import type { IntegrationType } from "./integrations/integration";
 import type { Integration, IntegrationParams } from "./integrations/types";
 
-export class CrawlFetcher {
+export class MangaFetcher {
   private integrationFactory: (params: IntegrationParams) => Integration;
   private integration: Integration | null;
 
