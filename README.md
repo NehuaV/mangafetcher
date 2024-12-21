@@ -1,4 +1,4 @@
-# weridscript
+# Manga fetcher
 
 <marquee
   direction="down"
@@ -6,7 +6,7 @@
   height="200"
   behavior="alternate"
   style="border:solid">
-<marquee behavior="alternate">Small script made for crawling images,<br>compressing them and backing them up</marquee>
+<marquee behavior="alternate">Small script made for fetching images from manga sites, compressing them and backing them up</marquee>
 </marquee>
 
 ## Running the app
@@ -51,4 +51,4 @@ bun start
 5. ~~Use typescript file name as integration baseurl~~
 6. ~~Install Playwright browser with bun install~~
 7. bundle browser?
-8. fix interface, should reflect sharp types
+8. ~~fix interface, should reflect sharp types~~
