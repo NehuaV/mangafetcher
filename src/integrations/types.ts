@@ -1,20 +1,24 @@
 import type { Page } from "playwright";
 import type { IntegrationType } from "./integration";
 import type { Chapter } from "@/lib/types";
+import type { AvifOptions, JpegOptions, PngOptions, WebpOptions } from "sharp";
 
-export type FileType = "jpeg" | "png" | "webp" | "avif";
+type FormatConfig<T, Format> = {
+  format: Format;
+  options: T;
+};
+
+export type SharpConfig =
+  | FormatConfig<WebpOptions, "webp">
+  | FormatConfig<JpegOptions, "jpeg">
+  | FormatConfig<PngOptions, "png">
+  | FormatConfig<AvifOptions, "avif">;
 
 export type IntegrationParams = {
   outDir: string;
   chapterRange: [number, number];
-
   URL: string | URL;
-
-  file?: {
-    fileType?: FileType;
-    fileEffort?: number;
-    fileCompressionLevel?: number;
-  };
+  sharp?: SharpConfig;
 };
 
 export type Integration = {
@@ -27,19 +31,8 @@ export type Integration = {
 export type Environment = {
   outDir: string;
   baseURL: string;
-  fileType: FileType;
-  /**
-   * 0-6 for webp/avif effort level
-   * 0-9 for jpeg/png quality level
-   */
-  fileEffort: number;
-  /**
-   * 0-9 for compression level
-   */
-  fileCompressionLevel: number;
-
+  sharp: SharpConfig;
   chapterRange: [number, number];
-
   pathToSeries: string;
   scopeSelector: string;
   titleSelectors: string[];

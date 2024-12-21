@@ -10,8 +10,7 @@ export const asuracomicNet = (params: IntegrationParams): Integration => {
     ...defaultEnvironment,
     pathToSeries: url.pathname,
     outDir: params.outDir,
-    fileType: params.file?.fileType || "webp",
-    fileCompressionLevel: params.file?.fileCompressionLevel || 6,
+    sharp: params.sharp || defaultEnvironment.sharp,
     chapterRange: params.chapterRange,
 
     baseURL: url.origin,

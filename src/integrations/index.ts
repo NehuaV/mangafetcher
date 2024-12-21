@@ -6,11 +6,15 @@ import { getIntegration } from "./implementations";
 export const defaultEnvironment: Environment = {
   outDir: "./images",
   baseURL: "",
-  fileType: "webp",
-  fileEffort: 6,
-  fileCompressionLevel: 9,
+  sharp: {
+    format: "webp",
+    options: {
+      effort: 6,
+      quality: 80,
+      lossless: false,
+    },
+  },
   chapterRange: [1, 100],
-
   pathToSeries: "",
   scopeSelector: "",
   titleSelectors: [],

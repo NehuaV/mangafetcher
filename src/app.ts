@@ -98,15 +98,14 @@ async function downloadImages(
         const buffer = await response.body();
 
         const fileName = `page-${String(image.index)}.${
-          integration.environment.fileType
+          integration.environment.sharp.format
         }`;
         const filePath = `${imagePack.chapterDir}/${fileName}`;
 
         await sharp(buffer)
-          [integration.environment.fileType!]({
-            effort: integration.environment.fileCompressionLevel,
-            compressionLevel: 9,
-          })
+          [integration.environment.sharp.format](
+            integration.environment.sharp.options
+          )
           .toFile(filePath);
 
         console.log(`Saved ${fileName}`);

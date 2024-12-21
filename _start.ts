@@ -4,10 +4,13 @@ try {
   const integration = new CrawlFetcher("asuracomic.net").fetch({
     URL: "https://asuracomic.net/series/the-return-of-the-crazy-demon-02189dcc",
     outDir: "./images",
-    file: {
-      fileType: "jpeg",
-      fileEffort: 6,
-      fileCompressionLevel: 9,
+    sharp: {
+      format: "jpeg",
+      options: {
+        quality: 80,
+        progressive: true,
+        chromaSubsampling: "4:4:4",
+      },
     },
     chapterRange: [1, 2],
   });
