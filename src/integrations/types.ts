@@ -26,8 +26,32 @@ export type Environment = {
   baseURL: string;
   sharp: SharpConfig;
   chapterRange: [number, number];
+  /**
+   * The path to the series.
+   *
+   * @example
+   * /series/dungeon-reset
+   */
   pathToSeries: string;
+  /**
+   * The selector to the scope of the manga images.
+   *
+   * @example
+   * //html/body/div/div[2]/div[1]/div/div/article/div[2]
+   */
   scopeSelector: string;
+  /**
+   * The selectors to the title of the manga.
+   *
+   * @example
+   * ["//html/body/div/div[2]/div[1]/div/div/article/div[2]"]
+   */
   titleSelectors: string[];
+  /**
+   * The selectors to the chapters of the manga.
+   *
+   * @example
+   * ["//html/body/div/div[2]/div[1]/div/div/article/div[2]"]
+   */
   chaptersSelectors: string[];
 };

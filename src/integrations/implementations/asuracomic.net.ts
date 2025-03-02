@@ -18,9 +18,15 @@ export class AsuracomicNet extends BaseIntegration {
       chapterRange: params.chapterRange,
 
       baseURL: url.origin,
-      scopeSelector: "//html/body/div[3]/div/div/div/div[5]",
-      titleSelectors: ["//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/span"],
-      chaptersSelectors: ["//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]"],
+      scopeSelector: "//html/body/div[4]/div/div/div/div[5]/div[2]",
+      titleSelectors: [
+        "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/span",
+        "//html/body/div[4]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[1]/div[2]/div[1]/span",
+      ],
+      chaptersSelectors: [
+        "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]",
+        "//html/body/div[4]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]",
+      ],
     };
   }
 
