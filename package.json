@@ -5,7 +5,6 @@
   "scripts": {
     "generate-integration-types": "bun run _integrationGen.ts",
     "prepare": "bun run generate-integration-types",
-    "build": "tsup --config tsup.config.ts ./src/index.ts",
     "postinstall": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install firefox",
     "start": "PLAYWRIGHT_BROWSERS_PATH=0 bun run _start.ts"
   },
@@ -18,7 +17,6 @@
   "dependencies": {
     "@cliqz/adblocker-playwright": "^1.34.0",
     "playwright": "^1.49.0",
-    "sharp": "^0.33.5",
-    "tsup": "^8.3.5"
+    "sharp": "^0.33.5"
   }
 }
