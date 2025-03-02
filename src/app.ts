@@ -7,28 +7,21 @@ import sharp from "sharp";
 import { getMangaName, getAllChapters } from "./utils";
 import { exists } from "./utils";
 
-async function runner(
-  chapter: Chapter,
-  directory: string,
-  page: Page,
-  integration: Integration
-) {
+async function runner(chapter: Chapter, directory: string, page: Page, integration: Integration) {
   console.log("Navigating to chapter...");
   await page.goto(chapter.url);
   await page.waitForLoadState("networkidle");
 
   console.log("Extracting image URLs...");
-  const imageUrls = await page
-    .locator(integration.environment.scopeSelector)
-    .evaluate((element: Element): string[] => {
-      const imgs = Array.from(element.querySelectorAll("img"));
+  const imageUrls = await page.locator(integration.environment.scopeSelector).evaluate((element: Element): string[] => {
+    const imgs = Array.from(element.querySelectorAll("img"));
 
-      return imgs
-        .filter((img) => img.naturalHeight > 512 && img.naturalWidth > 512)
-        .filter((img) => img.src.startsWith("https://"))
-        .map((img) => img.src)
-        .filter((src) => !!src);
-    });
+    return imgs
+      .filter((img) => img.naturalHeight > 512 && img.naturalWidth > 512)
+      .filter((img) => img.src.startsWith("https://"))
+      .map((img) => img.src)
+      .filter((src) => !!src);
+  });
 
   console.log(`Found ${imageUrls.length} images meeting size requirements.`);
   if (imageUrls.length === 0) {
@@ -69,43 +62,27 @@ type ImagesPack = {
   chapterDir: string;
 };
 
-async function downloadImages(
-  imagePack: ImagesPack,
-  page: Page,
-  integration: Integration
-) {
+async function downloadImages(imagePack: ImagesPack, page: Page, integration: Integration) {
   const downloadPromises = imagePack.imageQueue.map((image) => {
     const downloadImage = async (retries = 3) => {
-      console.log(
-        `Downloading image ${image.index + 1}/${imagePack.imageQueue.length}: ${
-          image.url
-        }`
-      );
+      console.log(`Downloading image ${image.index + 1}/${imagePack.imageQueue.length}: ${image.url}`);
 
       try {
         const response = await page.request.get(image.url);
 
         if (!response.ok()) {
-          console.error(
-            `Failed to download ${
-              image.url
-            }: ${response.status()} ${response.statusText()}`
-          );
+          console.error(`Failed to download ${image.url}: ${response.status()} ${response.statusText()}`);
           return;
         }
 
         // Get the binary data
         const buffer = await response.body();
 
-        const fileName = `page-${String(image.index)}.${
-          integration.environment.sharp.format
-        }`;
+        const fileName = `page-${String(image.index)}.${integration.environment.sharp.format}`;
         const filePath = `${imagePack.chapterDir}/${fileName}`;
 
         await sharp(buffer)
-          [integration.environment.sharp.format](
-            integration.environment.sharp.options
-          )
+          [integration.environment.sharp.format](integration.environment.sharp.options)
           .toFile(filePath);
 
         console.log(`Saved ${fileName}`);
@@ -159,10 +136,7 @@ export async function main(integration: Integration) {
 
   // Remove chapters outside of range
   for (const chapter of [...chapters]) {
-    if (
-      chapter.index < chapterRange[0] - 1 ||
-      chapter.index > chapterRange[1] - 1
-    ) {
+    if (chapter.index < chapterRange[0] - 1 || chapter.index > chapterRange[1] - 1) {
       chapters.splice(chapters.indexOf(chapter), 1);
     }
   }

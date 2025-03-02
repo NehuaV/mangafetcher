@@ -29,10 +29,7 @@ export async function getMangaName(page: Page, integration: Integration) {
   }
 
   // Otherwise, use first two path parameters of the URL
-  const targetUrlPaths = new URL(page.url()).pathname
-    .split("/")
-    .filter(Boolean)
-    .join("-");
+  const targetUrlPaths = new URL(page.url()).pathname.split("/").filter(Boolean).join("-");
 
   console.log("Using target URL paths:", targetUrlPaths);
   return `${integration.environment.outDir}/${targetUrlPaths}`;

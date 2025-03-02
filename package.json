@@ -9,7 +9,8 @@
     "start": "PLAYWRIGHT_BROWSERS_PATH=0 bun run _start.ts"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "prettier": "^3.5.2"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

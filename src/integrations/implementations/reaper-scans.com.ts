@@ -15,12 +15,8 @@ export const reaperScansCom = (params: IntegrationParams): Integration => {
 
     baseURL: url.origin,
     scopeSelector: "//html/body/div/div[2]/div[1]/div/div/article/div[2]",
-    titleSelectors: [
-      "//html/body/div/div[2]/div[1]/div[2]/div[1]/article/div[1]/div/div[2]/div[1]/div[1]/h1",
-    ],
-    chaptersSelectors: [
-      "//html/body/div/div[2]/div[1]/div[2]/div[1]/article/div[3]/div[3]/ul",
-    ],
+    titleSelectors: ["//html/body/div/div[2]/div[1]/div[2]/div[1]/article/div[1]/div/div[2]/div[1]/div[1]/h1"],
+    chaptersSelectors: ["//html/body/div/div[2]/div[1]/div[2]/div[1]/article/div[3]/div[3]/ul"],
   };
 
   const integration: Integration = {
@@ -55,9 +51,7 @@ export const reaperScansCom = (params: IntegrationParams): Integration => {
 
         for (let i = 0; i < listofChapterElements; i++) {
           // Get all elements in reverse order
-          const element = page
-            .locator(`${xpath}/*`)
-            .nth(listofChapterElements - i - 1);
+          const element = page.locator(`${xpath}/*`).nth(listofChapterElements - i - 1);
 
           // Get Inner a tag and its href attribute
           const aTag = element.locator("a");

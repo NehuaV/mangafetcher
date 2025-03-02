@@ -15,12 +15,8 @@ export const asuracomicNet = (params: IntegrationParams): Integration => {
 
     baseURL: url.origin,
     scopeSelector: "//html/body/div[3]/div/div/div/div[5]",
-    titleSelectors: [
-      "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/span",
-    ],
-    chaptersSelectors: [
-      "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]",
-    ],
+    titleSelectors: ["//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/span"],
+    chaptersSelectors: ["//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]"],
   };
 
   const integration: Integration = {
@@ -55,9 +51,7 @@ export const asuracomicNet = (params: IntegrationParams): Integration => {
 
         for (let i = 0; i < listofChapterElements; i++) {
           // Get all elements in reverse order
-          const element = page
-            .locator(`${xpath}/*`)
-            .nth(listofChapterElements - i - 1);
+          const element = page.locator(`${xpath}/*`).nth(listofChapterElements - i - 1);
 
           // Get Inner a tag and its href attribute
           const aTag = element.locator("a");
