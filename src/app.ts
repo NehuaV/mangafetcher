@@ -13,7 +13,7 @@ async function runner(chapter: Chapter, directory: string, page: Page, integrati
   await page.waitForLoadState("networkidle");
 
   console.log("Extracting image URLs...");
-  const imageUrls = await page.locator(integration.environment.scopeSelector).evaluate((element: Element): string[] => {
+  const imageUrls = await page.locator(integration.getEnvironment().scopeSelector).evaluate((element: Element): string[] => {
     const imgs = Array.from(element.querySelectorAll("img"));
 
     return imgs
@@ -78,12 +78,10 @@ async function downloadImages(imagePack: ImagesPack, page: Page, integration: In
         // Get the binary data
         const buffer = await response.body();
 
-        const fileName = `page-${String(image.index)}.${integration.environment.sharp.format}`;
+        const fileName = `page-${String(image.index)}.${integration.getEnvironment().sharp.format}`;
         const filePath = `${imagePack.chapterDir}/${fileName}`;
 
-        await sharp(buffer)
-          [integration.environment.sharp.format](integration.environment.sharp.options)
-          .toFile(filePath);
+        await sharp(buffer)[integration.getEnvironment().sharp.format](integration.getEnvironment().sharp.options).toFile(filePath);
 
         console.log(`Saved ${fileName}`);
       } catch (error) {
@@ -102,7 +100,7 @@ async function downloadImages(imagePack: ImagesPack, page: Page, integration: In
 }
 
 export async function main(integration: Integration) {
-  if (!integration.environment.pathToSeries) {
+  if (!integration.getEnvironment().pathToSeries) {
     throw new Error("pathToSeries is required");
   }
 
@@ -110,7 +108,7 @@ export async function main(integration: Integration) {
   const { browser, context, page } = await createBrowser();
 
   console.log("Navigating to page...");
-  const targetUrl = `${integration.environment.baseURL}${integration.environment.pathToSeries}`;
+  const targetUrl = `${integration.getEnvironment().baseURL}${integration.getEnvironment().pathToSeries}`;
   await page.goto(targetUrl);
   await page.waitForLoadState("domcontentloaded");
 
@@ -121,7 +119,7 @@ export async function main(integration: Integration) {
   const chapters = await getAllChapters(page, integration);
 
   // Chapter range validation
-  const chapterRange = integration.environment.chapterRange;
+  const chapterRange = integration.getEnvironment().chapterRange;
   if (chapterRange.length !== 2) {
     throw new Error("Chapter range must be an array of two numbers.");
   }

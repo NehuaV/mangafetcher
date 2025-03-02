@@ -25,14 +25,14 @@ export async function getMangaName(page: Page, integration: Integration) {
 
     console.log("Using manga name:", mangaName);
     console.log("Converted manga name:", newMangaName);
-    return `${integration.environment.outDir}/${newMangaName}`;
+    return `${integration.getEnvironment().outDir}/${newMangaName}`;
   }
 
   // Otherwise, use first two path parameters of the URL
   const targetUrlPaths = new URL(page.url()).pathname.split("/").filter(Boolean).join("-");
 
   console.log("Using target URL paths:", targetUrlPaths);
-  return `${integration.environment.outDir}/${targetUrlPaths}`;
+  return `${integration.getEnvironment().outDir}/${targetUrlPaths}`;
 }
 
 export async function getAllChapters(page: Page, integration: Integration) {
@@ -49,19 +49,12 @@ export async function getAllChapters(page: Page, integration: Integration) {
 export async function createBrowser() {
   const browser = await firefox.launch({
     headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-accelerated-2d-canvas",
-      "--disable-gpu",
-    ],
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-accelerated-2d-canvas", "--disable-gpu"],
   });
 
   const context = await browser.newContext({
     javaScriptEnabled: true,
-    userAgent:
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     viewport: {
       width: 2560,
       height: 1440,

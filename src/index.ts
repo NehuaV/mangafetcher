@@ -1,11 +1,12 @@
 import { main } from "./app";
 import { IntegrationFactory } from "./integrations";
 import type { IntegrationType } from "./integrations/integration";
-import type { Integration, IntegrationParams } from "./integrations/types";
+import type { IntegrationParams } from "./integrations/types";
+import type { BaseIntegration } from "./integrations/base";
 
 export class MangaFetcher {
-  private integrationFactory: (params: IntegrationParams) => Integration;
-  private integration: Integration | null;
+  private integrationFactory: (params: IntegrationParams) => BaseIntegration;
+  private integration: BaseIntegration | null;
 
   constructor(type: IntegrationType) {
     this.integrationFactory = IntegrationFactory(type);

@@ -1,7 +1,7 @@
-import type { Page } from "playwright";
+import type { Environment, IntegrationParams } from "./types";
 import type { IntegrationType } from "./integration";
-import type { Environment, Integration, IntegrationParams } from "./types";
-import { getIntegration } from "./registry";
+import type { BaseIntegration } from "./base";
+import { getIntegrationClass } from "./registry";
 
 export const defaultEnvironment: Environment = {
   outDir: "./images",
@@ -21,27 +21,10 @@ export const defaultEnvironment: Environment = {
   chaptersSelectors: [],
 };
 
-export const defaultIntegration: Integration = {
-  environment: defaultEnvironment,
-  type: "",
-  titleFinder: async (page: Page) => "",
-  chaptersFinder: async (page: Page) => [],
-};
+export const IntegrationFactory = (type: IntegrationType) => {
+  return (params: IntegrationParams): BaseIntegration => {
+    const IntegrationClass = getIntegrationClass(type);
 
-export const IntegrationFactory =
-  (type: IntegrationType) =>
-  (params: IntegrationParams): Integration => {
-    const url = new URL(params.URL);
-
-    if (!url.hostname || !url.pathname) {
-      throw new Error("URL must be a valid URL");
-    }
-
-    const integration = getIntegration(type)(params);
-
-    if (integration.type !== url.hostname) {
-      throw new Error("Integration type does not match URL hostname");
-    }
-
-    return integration;
+    return new IntegrationClass(params);
   };
+};

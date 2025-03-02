@@ -1,7 +1,5 @@
-import type { Page } from "playwright";
-import type { IntegrationType } from "./integration";
-import type { Chapter } from "@/lib/types";
 import type { AvifOptions, JpegOptions, PngOptions, WebpOptions } from "sharp";
+import type { BaseIntegration } from "./base";
 
 type FormatConfig<T, Format> = {
   format: Format;
@@ -21,12 +19,7 @@ export type IntegrationParams = {
   sharp?: SharpConfig;
 };
 
-export type Integration = {
-  environment: Environment;
-  type: IntegrationType | "";
-  titleFinder: (page: Page) => Promise<string>;
-  chaptersFinder: (page: Page) => Promise<Chapter[]>;
-};
+export type Integration = BaseIntegration;
 
 export type Environment = {
   outDir: string;
