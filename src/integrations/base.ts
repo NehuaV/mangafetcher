@@ -1,6 +1,6 @@
-import type { Page } from "playwright";
-import type { Chapter } from "@/types";
-import type { Environment, IntegrationParams, SharpConfig } from "./types";
+import type { Chapter } from '@/types';
+import type { Page } from 'playwright';
+import type { Environment, IntegrationParams, SharpConfig } from './types';
 
 export abstract class BaseIntegration {
   protected environment: Environment;
@@ -10,13 +10,13 @@ export abstract class BaseIntegration {
     const url = new URL(params.URL);
 
     if (!url.hostname || !url.pathname) {
-      throw new Error("URL must be a valid URL");
+      throw new Error('URL must be a valid URL');
     }
 
     this.type = this.getIntegrationType();
 
     if (this.type !== url.hostname) {
-      throw new Error("Integration type does not match URL hostname");
+      throw new Error('Integration type does not match URL hostname');
     }
 
     this.environment = this.createEnvironment(params, url);

@@ -1,11 +1,11 @@
-import { MangaFetcher } from "./src/index";
+import { MangaFetcher } from './src/index';
 
 try {
   const integration = new MangaFetcher({
-    URL: "https://asuracomic.net/series/the-return-of-the-crazy-demon-02189dcc",
-    outDir: "./images",
+    URL: 'https://asuracomic.net/series/the-return-of-the-crazy-demon-02189dcc',
+    outDir: './images',
     sharp: {
-      format: "png",
+      format: 'png',
       options: {
         quality: 90,
         compressionLevel: 9,
@@ -17,7 +17,7 @@ try {
 
   await integration.start();
 } catch (error) {
-  console.error("Fatal error:", error);
+  console.error('Fatal error:', error);
   process.exit(1);
 } finally {
   process.exit(0);

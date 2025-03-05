@@ -1,5 +1,5 @@
-import type { AvifOptions, JpegOptions, PngOptions, WebpOptions } from "sharp";
-import type { BaseIntegration } from "./base";
+import type { AvifOptions, JpegOptions, PngOptions, WebpOptions } from 'sharp';
+import type { BaseIntegration } from './base';
 
 type FormatConfig<T, Format> = {
   format: Format;
@@ -7,10 +7,10 @@ type FormatConfig<T, Format> = {
 };
 
 export type SharpConfig =
-  | FormatConfig<WebpOptions, "webp">
-  | FormatConfig<JpegOptions, "jpeg">
-  | FormatConfig<PngOptions, "png">
-  | FormatConfig<AvifOptions, "avif">;
+  | FormatConfig<WebpOptions, 'webp'>
+  | FormatConfig<JpegOptions, 'jpeg'>
+  | FormatConfig<PngOptions, 'png'>
+  | FormatConfig<AvifOptions, 'avif'>;
 
 export type IntegrationParams = {
   outDir: string;

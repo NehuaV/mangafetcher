@@ -1,12 +1,12 @@
-import type { Chapter } from "@/types";
-import type { Page } from "playwright";
-import type { IntegrationParams } from "../types";
-import { BaseIntegration } from "../base";
-import { defaultEnvironment } from "..";
+import type { Chapter } from '@/types';
+import type { Page } from 'playwright';
+import { defaultEnvironment } from '..';
+import { BaseIntegration } from '../base';
+import type { IntegrationParams } from '../types';
 
 export class AsuracomicNet extends BaseIntegration {
   getIntegrationType(): string {
-    return "asuracomic.net";
+    return 'asuracomic.net';
   }
 
   createEnvironment(params: IntegrationParams, url: URL) {
@@ -18,14 +18,14 @@ export class AsuracomicNet extends BaseIntegration {
       chapterRange: params.chapterRange,
 
       baseURL: url.origin,
-      scopeSelector: "//html/body/div[4]/div/div/div/div[5]/div[2]",
+      scopeSelector: '//html/body/div[4]/div/div/div/div[5]/div[2]',
       titleSelectors: [
-        "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/span",
-        "//html/body/div[4]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[1]/div[2]/div[1]/span",
+        '//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[2]/div[2]/div[1]/span',
+        '//html/body/div[4]/div/div/div/div[1]/div/div[1]/div[1]/div[2]/div[1]/div[2]/div[1]/span',
       ],
       chaptersSelectors: [
-        "//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]",
-        "//html/body/div[4]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]",
+        '//html/body/div[3]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]',
+        '//html/body/div[4]/div/div/div/div[1]/div/div[1]/div[2]/div[3]/div[2]',
       ],
     };
   }
@@ -45,7 +45,7 @@ export class AsuracomicNet extends BaseIntegration {
       }
     }
 
-    return "";
+    return '';
   }
 
   async chaptersFinder(page: Page): Promise<Chapter[]> {
@@ -62,14 +62,14 @@ export class AsuracomicNet extends BaseIntegration {
         const element = page.locator(`${xpath}/*`).nth(listofChapterElements - i - 1);
 
         // Get Inner a tag and its href attribute
-        const aTag = element.locator("a");
-        const urlPathName = await aTag.getAttribute("href");
-        const name = await aTag.locator("h3").nth(0).innerText();
+        const aTag = element.locator('a');
+        const urlPathName = await aTag.getAttribute('href');
+        const name = await aTag.locator('h3').nth(0).innerText();
 
         const url = `${this.environment.baseURL}/series/${urlPathName}`;
 
         chapters.push({
-          url: url || "",
+          url: url || '',
           index: i,
           name: name || `Chapter ${i + 1} ()`,
         });

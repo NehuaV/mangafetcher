@@ -1,35 +1,35 @@
-import { type Page } from "playwright";
-import { readdir } from "fs/promises";
-import { createBrowser, upsertDir } from "./utils";
-import type { Integration } from "./integrations/types";
-import type { Chapter, ChapterImage } from "./types";
-import sharp from "sharp";
-import { getMangaName, getAllChapters } from "./utils";
-import { exists } from "./utils";
+import { readdir } from 'node:fs/promises';
+import type { Page } from 'playwright';
+import sharp from 'sharp';
+import type { Integration } from './integrations/types';
+import type { Chapter, ChapterImage } from './types';
+import { createBrowser, upsertDir } from './utils';
+import { getAllChapters, getMangaName } from './utils';
+import { exists } from './utils';
 
 async function runner(chapter: Chapter, directory: string, page: Page, integration: Integration) {
-  console.log("Navigating to chapter...");
+  console.log('Navigating to chapter...');
   await page.goto(chapter.url);
-  await page.waitForLoadState("networkidle");
+  await page.waitForLoadState('networkidle');
 
-  console.log("Extracting image URLs...");
+  console.log('Extracting image URLs...');
   const imageUrls = await page.locator(integration.getEnvironment().scopeSelector).evaluate((element: Element): string[] => {
-    const imgs = Array.from(element.querySelectorAll("img"));
+    const imgs = Array.from(element.querySelectorAll('img'));
 
     return imgs
       .filter((img) => img.naturalHeight > 512 && img.naturalWidth > 512)
-      .filter((img) => img.src.startsWith("https://"))
+      .filter((img) => img.src.startsWith('https://'))
       .map((img) => img.src)
       .filter((src) => !!src);
   });
 
   console.log(`Found ${imageUrls.length} images meeting size requirements.`);
   if (imageUrls.length === 0) {
-    console.error("No images found, skipping...");
-    throw new Error("No images found");
+    console.error('No images found, skipping...');
+    throw new Error('No images found');
   }
 
-  console.log("Feeding into queue...");
+  console.log('Feeding into queue...');
   const imageQueue: ChapterImage[] = [];
   for (const [index, url] of imageUrls.entries()) {
     imageQueue.push({
@@ -45,7 +45,7 @@ async function runner(chapter: Chapter, directory: string, page: Page, integrati
 
   const existingFiles = await readdir(chapterDir);
   if (imageQueue.length === existingFiles.length) {
-    console.warn("All images already downloaded.");
+    console.warn('All images already downloaded.');
     return;
   }
 
@@ -53,7 +53,7 @@ async function runner(chapter: Chapter, directory: string, page: Page, integrati
     imageQueue,
     chapterDir,
   };
-  console.log("Downloading images...", chapter.name);
+  console.log('Downloading images...', chapter.name);
   await downloadImages(imagesPack, page, integration);
 }
 
@@ -101,35 +101,35 @@ async function downloadImages(imagePack: ImagesPack, page: Page, integration: In
 
 export async function main(integration: Integration) {
   if (!integration.getEnvironment().pathToSeries) {
-    throw new Error("pathToSeries is required");
+    throw new Error('pathToSeries is required');
   }
 
-  console.log("Creating browser...");
+  console.log('Creating browser...');
   const { browser, context, page } = await createBrowser();
 
-  console.log("Navigating to page...");
+  console.log('Navigating to page...');
   const targetUrl = `${integration.getEnvironment().baseURL}${integration.getEnvironment().pathToSeries}`;
   await page.goto(targetUrl);
-  await page.waitForLoadState("domcontentloaded");
+  await page.waitForLoadState('domcontentloaded');
 
-  console.log("Determining manga name...");
+  console.log('Determining manga name...');
   const directory = await getMangaName(page, integration);
 
-  console.log("Getting all chapters...");
+  console.log('Getting all chapters...');
   const chapters = await getAllChapters(page, integration);
 
   // Chapter range validation
   const chapterRange = integration.getEnvironment().chapterRange;
   if (chapterRange.length !== 2) {
-    throw new Error("Chapter range must be an array of two numbers.");
+    throw new Error('Chapter range must be an array of two numbers.');
   }
 
   if (chapterRange[0] > chapterRange[1]) {
-    throw new Error("First chapter must be less than last chapter.");
+    throw new Error('First chapter must be less than last chapter.');
   }
 
   if (chapterRange[0] < 1) {
-    throw new Error("First chapter must be greater than 1.");
+    throw new Error('First chapter must be greater than 1.');
   }
 
   // Remove chapters outside of range

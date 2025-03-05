@@ -1,13 +1,13 @@
-import type { Environment, IntegrationParams } from "./types";
-import type { IntegrationType } from "./integration";
-import type { BaseIntegration } from "./base";
-import { getIntegrationClass } from "./registry";
+import type { BaseIntegration } from './base';
+import type { IntegrationType } from './integration';
+import { getIntegrationClass } from './registry';
+import type { Environment, IntegrationParams } from './types';
 
 export const defaultEnvironment: Environment = {
-  outDir: "./images",
-  baseURL: "",
+  outDir: './images',
+  baseURL: '',
   sharp: {
-    format: "webp",
+    format: 'webp',
     options: {
       effort: 6,
       quality: 80,
@@ -15,8 +15,8 @@ export const defaultEnvironment: Environment = {
     },
   },
   chapterRange: [1, 100],
-  pathToSeries: "",
-  scopeSelector: "",
+  pathToSeries: '',
+  scopeSelector: '',
   titleSelectors: [],
   chaptersSelectors: [],
 };

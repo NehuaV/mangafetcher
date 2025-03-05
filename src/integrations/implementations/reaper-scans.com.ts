@@ -1,12 +1,12 @@
-import type { Chapter } from "@/types";
-import type { Page } from "playwright";
-import type { IntegrationParams } from "../types";
-import { BaseIntegration } from "../base";
-import { defaultEnvironment } from "..";
+import type { Chapter } from '@/types';
+import type { Page } from 'playwright';
+import { defaultEnvironment } from '..';
+import { BaseIntegration } from '../base';
+import type { IntegrationParams } from '../types';
 
 export class ReaperScansCom extends BaseIntegration {
   getIntegrationType(): string {
-    return "reaper-scans.com";
+    return 'reaper-scans.com';
   }
 
   createEnvironment(params: IntegrationParams, url: URL) {
@@ -18,9 +18,9 @@ export class ReaperScansCom extends BaseIntegration {
       chapterRange: params.chapterRange,
 
       baseURL: url.origin,
-      scopeSelector: "//html/body/div/div[2]/div[1]/div/div/article/div[2]",
-      titleSelectors: ["//html/body/div/div[2]/div[1]/div[2]/div[1]/article/div[1]/div/div[2]/div[1]/div[1]/h1"],
-      chaptersSelectors: ["//html/body/div/div[2]/div[1]/div[2]/div[1]/article/div[3]/div[3]/ul"],
+      scopeSelector: '//html/body/div/div[2]/div[1]/div/div/article/div[2]',
+      titleSelectors: ['//html/body/div/div[2]/div[1]/div[2]/div[1]/article/div[1]/div/div[2]/div[1]/div[1]/h1'],
+      chaptersSelectors: ['//html/body/div/div[2]/div[1]/div[2]/div[1]/article/div[3]/div[3]/ul'],
     };
   }
 
@@ -39,7 +39,7 @@ export class ReaperScansCom extends BaseIntegration {
       }
     }
 
-    return "";
+    return '';
   }
 
   async chaptersFinder(page: Page): Promise<Chapter[]> {
@@ -56,12 +56,12 @@ export class ReaperScansCom extends BaseIntegration {
         const element = page.locator(`${xpath}/*`).nth(listofChapterElements - i - 1);
 
         // Get Inner a tag and its href attribute
-        const aTag = element.locator("a");
-        const urlPathName = await aTag.getAttribute("href");
-        const name = await aTag.locator("span").nth(0).innerText();
+        const aTag = element.locator('a');
+        const urlPathName = await aTag.getAttribute('href');
+        const name = await aTag.locator('span').nth(0).innerText();
 
         chapters.push({
-          url: urlPathName || "",
+          url: urlPathName || '',
           index: i,
           name: name || `Chapter ${i + 1} ()`,
         });
