@@ -5,7 +5,7 @@ const integrationFiles = await readdir('./src/integrations/implementations');
 
 const integrationTypes = integrationFiles
   .map((file) => file.split('.').slice(0, -1).join('.'))
-  .map((type) => `"${type}"`)
+  .map((type) => `'${type}'`)
   .join(' | ');
 
 const integrationTypesFile = `export type IntegrationType = ${integrationTypes};\n`;
