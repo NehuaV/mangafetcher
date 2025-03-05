@@ -1,5 +1,5 @@
 import type { Page } from "playwright";
-import type { Chapter } from "@/lib/types";
+import type { Chapter } from "@/types";
 import type { Environment, IntegrationParams, SharpConfig } from "./types";
 
 export abstract class BaseIntegration {

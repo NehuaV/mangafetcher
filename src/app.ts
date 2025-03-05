@@ -2,7 +2,7 @@ import { type Page } from "playwright";
 import { readdir } from "fs/promises";
 import { createBrowser, upsertDir } from "./utils";
 import type { Integration } from "./integrations/types";
-import type { Chapter, ChapterImage } from "./lib/types";
+import type { Chapter, ChapterImage } from "./types";
 import sharp from "sharp";
 import { getMangaName, getAllChapters } from "./utils";
 import { exists } from "./utils";

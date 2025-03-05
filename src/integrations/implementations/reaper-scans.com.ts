@@ -1,4 +1,4 @@
-import type { Chapter } from "@/lib/types";
+import type { Chapter } from "@/types";
 import type { Page } from "playwright";
 import type { IntegrationParams } from "../types";
 import { BaseIntegration } from "../base";
