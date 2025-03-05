@@ -5,7 +5,6 @@ import type { BaseIntegration } from "./integrations/base";
 import { isIntegration } from "./utils";
 
 export class MangaFetcher {
-  private integrationFactory: (params: IntegrationParams) => BaseIntegration;
   private integration: BaseIntegration;
 
   constructor(params: IntegrationParams) {
@@ -15,8 +14,7 @@ export class MangaFetcher {
       throw new Error(`Integration "${hostname}" not found`);
     }
 
-    this.integrationFactory = IntegrationFactory(hostname);
-    this.integration = this.integrationFactory(params);
+    this.integration = IntegrationFactory(hostname)(params);
   }
 
   async start() {

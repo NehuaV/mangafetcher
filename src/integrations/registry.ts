@@ -14,7 +14,5 @@ export const integrationRegistry: IntegrationRegistry = {
 };
 
 export const getIntegrationClass = (type: IntegrationType): IntegrationConstructor => {
-  const IntegrationClass = integrationRegistry[type];
-
-  return IntegrationClass;
+  return integrationRegistry[type];
 };

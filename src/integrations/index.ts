@@ -21,10 +21,10 @@ export const defaultEnvironment: Environment = {
   chaptersSelectors: [],
 };
 
-export const IntegrationFactory = (type: IntegrationType) => {
-  return (params: IntegrationParams): BaseIntegration => {
+export const IntegrationFactory =
+  (type: IntegrationType) =>
+  (params: IntegrationParams): BaseIntegration => {
     const IntegrationClass = getIntegrationClass(type);
 
     return new IntegrationClass(params);
   };
-};
