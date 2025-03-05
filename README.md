@@ -54,7 +54,7 @@ Edit the `_start.ts` file to configure your manga download:
 import { MangaFetcher } from "./src/index";
 
 try {
-  const integration = new MangaFetcher("asuracomic.net").fetch({
+  const integration = new MangaFetcher({
     URL: "https://asuracomic.net/series/your-manga-series",
     outDir: "./images",
     sharp: {
