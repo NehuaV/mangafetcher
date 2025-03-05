@@ -1,27 +1,25 @@
 import { main } from "./app";
 import { IntegrationFactory } from "./integrations";
-import type { IntegrationType } from "./integrations/integration";
 import type { IntegrationParams } from "./integrations/types";
 import type { BaseIntegration } from "./integrations/base";
+import { isIntegration } from "./utils";
 
 export class MangaFetcher {
   private integrationFactory: (params: IntegrationParams) => BaseIntegration;
-  private integration: BaseIntegration | null;
+  private integration: BaseIntegration;
 
-  constructor(type: IntegrationType) {
-    this.integrationFactory = IntegrationFactory(type);
-    this.integration = null;
-  }
+  constructor(params: IntegrationParams) {
+    const hostname = new URL(params.URL).hostname;
 
-  fetch(params: IntegrationParams) {
+    if (!isIntegration(hostname)) {
+      throw new Error(`Integration "${hostname}" not found`);
+    }
+
+    this.integrationFactory = IntegrationFactory(hostname);
     this.integration = this.integrationFactory(params);
-    return this;
   }
 
   async start() {
-    if (!this.integration) {
-      throw new Error("Integration not found");
-    }
     await main(this.integration);
   }
 }

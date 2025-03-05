@@ -6,18 +6,15 @@ import { AsuracomicNet } from "./implementations/asuracomic.net";
 import { ReaperScansCom } from "./implementations/reaper-scans.com";
 
 type IntegrationConstructor = new (params: IntegrationParams) => BaseIntegration;
+type IntegrationRegistry = Record<IntegrationType, IntegrationConstructor>;
 
-const integrationRegistry: Record<IntegrationType, IntegrationConstructor> = {
+export const integrationRegistry: IntegrationRegistry = {
   "asuracomic.net": AsuracomicNet,
   "reaper-scans.com": ReaperScansCom,
 };
 
 export const getIntegrationClass = (type: IntegrationType): IntegrationConstructor => {
   const IntegrationClass = integrationRegistry[type];
-
-  if (!IntegrationClass) {
-    throw new Error(`Integration "${type}" not found`);
-  }
 
   return IntegrationClass;
 };

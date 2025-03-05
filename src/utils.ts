@@ -1,7 +1,9 @@
 import { PlaywrightBlocker } from "@cliqz/adblocker-playwright";
 import { firefox, type Page } from "playwright";
-import { stat, mkdir } from "fs/promises";
+import { stat, mkdir } from "node:fs/promises";
 import type { Integration } from "./integrations/types";
+import type { IntegrationType } from "./integrations/integration";
+import { integrationRegistry } from "./integrations/registry";
 
 export async function upsertDir(dir: string) {
   try {
@@ -93,4 +95,8 @@ export async function exists(filePath: string) {
   } catch {
     return false;
   }
+}
+
+export function isIntegration(hostname: string): hostname is IntegrationType {
+  return hostname in integrationRegistry;
 }

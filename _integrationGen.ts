@@ -1,5 +1,5 @@
 import { write } from "bun";
-import { readdir } from "fs/promises";
+import { readdir } from "node:fs/promises";
 
 const integrationFiles = await readdir("./src/integrations/implementations");
 

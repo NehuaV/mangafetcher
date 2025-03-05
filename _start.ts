@@ -1,7 +1,7 @@
 import { MangaFetcher } from "./src/index";
 
 try {
-  const integration = new MangaFetcher("asuracomic.net").fetch({
+  const integration = new MangaFetcher({
     URL: "https://asuracomic.net/series/the-return-of-the-crazy-demon-02189dcc",
     outDir: "./images",
     sharp: {
