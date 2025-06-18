@@ -19,11 +19,13 @@ export const defaultEnvironment: Environment = {
   chaptersSelectors: [],
 };
 
+type IntegrationClass = new (params: IntegrationParams) => BaseIntegration;
+
 export const IntegrationFactory = async (hostname: string) => {
   return async (params: IntegrationParams): Promise<BaseIntegration> => {
     try {
       const module = await import(`./implementations/${hostname}.ts`);
-      const IntegrationClass = module.default;
+      const IntegrationClass = module.default as IntegrationClass;
 
       if (!IntegrationClass) {
         throw new Error(`Integration class not found for ${hostname}`);
