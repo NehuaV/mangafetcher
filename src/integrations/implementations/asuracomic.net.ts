@@ -4,7 +4,7 @@ import { defaultEnvironment } from '..';
 import { BaseIntegration } from '../base';
 import type { IntegrationParams } from '../types';
 
-export class AsuracomicNet extends BaseIntegration {
+export default class AsuracomicNet extends BaseIntegration {
   getIntegrationType(): string {
     // Extract hostname from the current file path
     const url = new URL(import.meta.url);

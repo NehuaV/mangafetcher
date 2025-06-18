@@ -23,7 +23,7 @@ export const IntegrationFactory = async (hostname: string) => {
   return async (params: IntegrationParams): Promise<BaseIntegration> => {
     try {
       const module = await import(`./implementations/${hostname}.ts`);
-      const IntegrationClass = module[Object.keys(module)[0]];
+      const IntegrationClass = module.default;
 
       if (!IntegrationClass) {
         throw new Error(`Integration class not found for ${hostname}`);

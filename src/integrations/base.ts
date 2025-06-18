@@ -1,6 +1,6 @@
 import type { Chapter } from '@/types';
 import type { Page } from 'playwright';
-import type { Environment, IntegrationParams, SharpConfig } from './types';
+import type { Environment, IntegrationParams } from './types';
 
 export abstract class BaseIntegration {
   protected environment: Environment;
