@@ -14,11 +14,11 @@
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5.0.0"
+    "typescript": "^5.8.2"
   },
   "dependencies": {
     "@cliqz/adblocker-playwright": "^1.34.0",
-    "playwright": "^1.49.0",
+    "playwright": "^1.53.1",
     "sharp": "^0.33.5"
   }
 }
