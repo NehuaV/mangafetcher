@@ -1,8 +1,7 @@
 import { mkdir, stat } from 'node:fs/promises';
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import { type Page, firefox } from 'playwright';
-import type { BaseIntegration } from './integrations/base';
-import type { Integration, IntegrationParams } from './integrations/types';
+import type { Integration } from './integrations/types';
 
 export async function upsertDir(dir: string) {
   try {
