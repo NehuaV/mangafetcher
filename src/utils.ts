@@ -1,9 +1,8 @@
 import { mkdir, stat } from 'node:fs/promises';
 import { PlaywrightBlocker } from '@cliqz/adblocker-playwright';
 import { type Page, firefox } from 'playwright';
-import type { IntegrationType } from './integrations/integration';
-import { integrationRegistry } from './integrations/registry';
-import type { Integration } from './integrations/types';
+import type { BaseIntegration } from './integrations/base';
+import type { Integration, IntegrationParams } from './integrations/types';
 
 export async function upsertDir(dir: string) {
   try {
@@ -95,8 +94,4 @@ export async function exists(filePath: string) {
   } catch {
     return false;
   }
-}
-
-export function isIntegration(hostname: string): hostname is IntegrationType {
-  return hostname in integrationRegistry;
 }

@@ -6,7 +6,10 @@ import type { IntegrationParams } from '../types';
 
 export class ReaperScansCom extends BaseIntegration {
   getIntegrationType(): string {
-    return 'reaper-scans.com';
+    // Extract hostname from the current file path
+    const url = new URL(import.meta.url);
+    const filename = url.pathname.split('/').pop()?.replace('.ts', '') || '';
+    return filename;
   }
 
   createEnvironment(params: IntegrationParams, url: URL) {

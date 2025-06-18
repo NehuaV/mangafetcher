@@ -1,6 +1,4 @@
 import type { BaseIntegration } from './base';
-import type { IntegrationType } from './integration';
-import { getIntegrationClass } from './registry';
 import type { Environment, IntegrationParams } from './types';
 
 export const defaultEnvironment: Environment = {
@@ -21,10 +19,19 @@ export const defaultEnvironment: Environment = {
   chaptersSelectors: [],
 };
 
-export const IntegrationFactory =
-  (type: IntegrationType) =>
-  (params: IntegrationParams): BaseIntegration => {
-    const IntegrationClass = getIntegrationClass(type);
+export const IntegrationFactory = async (hostname: string) => {
+  return async (params: IntegrationParams): Promise<BaseIntegration> => {
+    try {
+      const module = await import(`./implementations/${hostname}.ts`);
+      const IntegrationClass = module[Object.keys(module)[0]];
 
-    return new IntegrationClass(params);
+      if (!IntegrationClass) {
+        throw new Error(`Integration class not found for ${hostname}`);
+      }
+
+      return new IntegrationClass(params);
+    } catch (error) {
+      throw new Error(`Integration "${hostname}" not found: ${error}`);
+    }
   };
+};
