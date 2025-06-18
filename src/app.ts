@@ -3,9 +3,7 @@ import type { Page } from 'playwright';
 import sharp from 'sharp';
 import type { Integration, SharpConfig } from './integrations/types';
 import type { Chapter, ChapterImage } from './types';
-import { createBrowser, upsertDir } from './utils';
-import { getAllChapters, getMangaName } from './utils';
-import { exists } from './utils';
+import { createBrowser, exists, getAllChapters, getMangaName, upsertDir } from './utils';
 
 async function chapterRunner(chapter: Chapter, directory: string, page: Page, integration: Integration) {
   console.log(`Processing chapter: ${chapter.name}`);

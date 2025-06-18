@@ -1,5 +1,5 @@
-import type { Chapter } from '@/types';
 import type { Page } from 'playwright';
+import type { Chapter } from '@/types';
 import { defaultEnvironment } from '..';
 import { BaseIntegration } from '../base';
 import type { IntegrationParams } from '../types';
