@@ -1,6 +1,9 @@
-import { err, type Result, tryCatch } from '../types.ts';
+import { err, ok, type Result, tryCatch } from '../types.ts';
 import type { BaseIntegration } from './base.ts';
+import type { IntegrationType } from './integration.d.ts';
 import type { Environment, IntegrationParams } from './types.ts';
+
+export type { IntegrationType };
 
 export const defaultEnvironment: Environment = {
   outDir: './images',
@@ -23,7 +26,7 @@ export const defaultEnvironment: Environment = {
 
 type IntegrationClass = new (params: IntegrationParams) => BaseIntegration;
 
-export async function createIntegration(hostname: string, params: IntegrationParams): Promise<Result<BaseIntegration>> {
+export async function createIntegration(hostname: IntegrationType | string, params: IntegrationParams): Promise<Result<BaseIntegration>> {
   if (!hostname || hostname.includes('/') || hostname.includes('..')) {
     return err(new Error(`Invalid integration hostname: "${hostname}"`));
   }
@@ -38,5 +41,11 @@ export async function createIntegration(hostname: string, params: IntegrationPar
     return err(new Error(`Integration class not found for "${hostname}"`));
   }
 
-  return tryCatch(async () => new IntegrationClass(params));
+  const instance = new IntegrationClass(params);
+  const [, initError] = instance.init();
+  if (initError) {
+    return err(initError);
+  }
+
+  return ok(instance);
 }

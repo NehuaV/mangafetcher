@@ -1,25 +1,35 @@
 import type { Page } from 'playwright';
-import { type Chapter, err, ok, type Result, tryCatch } from '../types.ts';
+import { type Chapter, err, ok, type Result, toError, tryCatch } from '../types.ts';
 import type { Environment, IntegrationParams } from './types.ts';
 
 export abstract class BaseIntegration {
-  protected environment: Environment;
+  protected environment!: Environment;
+  protected readonly params: IntegrationParams;
   readonly type: string;
 
   constructor(params: IntegrationParams) {
-    const url = new URL(params.URL);
+    this.params = params;
+    this.type = this.getIntegrationType();
+  }
+
+  init(): Result<void> {
+    let url: URL;
+    try {
+      url = new URL(this.params.URL);
+    } catch (error) {
+      return err(new Error(`Invalid URL "${String(this.params.URL)}": ${toError(error).message}`));
+    }
 
     if (!url.hostname || !url.pathname) {
-      throw new Error('URL must be a valid URL');
+      return err(new Error('URL must be a valid URL'));
     }
-
-    this.type = this.getIntegrationType();
 
     if (this.type !== url.hostname) {
-      throw new Error(`Integration type "${this.type}" does not match URL hostname "${url.hostname}"`);
+      return err(new Error(`Integration type "${this.type}" does not match URL hostname "${url.hostname}"`));
     }
 
-    this.environment = this.createEnvironment(params, url);
+    this.environment = this.createEnvironment(this.params, url);
+    return ok(undefined);
   }
 
   getEnvironment(): Environment {

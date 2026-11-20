@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { Page } from 'playwright';
+import { MangaFetcher } from '../src/index.ts';
 import { createIntegration } from '../src/integrations/index.ts';
 
 function createMockPage(selectors: { title?: string; chaptersBySelector: Record<string, Array<{ href: string; name: string }>> }): Page {
@@ -74,5 +75,16 @@ describe('createIntegration', () => {
     assert.equal(chapters?.[0]?.name, 'Chapter 1');
     assert.equal(chapters?.[0]?.url, 'https://asurascans.com/comics/test-series/chapter/1');
     assert.equal(chapters?.[1]?.name, 'Chapter 2');
+  });
+
+  it('returns [null, Error] for invalid URLs in MangaFetcher without throwing', async () => {
+    const [created, createErr] = MangaFetcher.create({ URL: 'not-a-valid-url' });
+    assert.equal(created, null);
+    assert.match(createErr?.message ?? '', /Invalid URL/);
+
+    const fetcher = new MangaFetcher({ URL: 'not-a-valid-url' });
+    const [started, startErr] = await fetcher.start();
+    assert.equal(started, null);
+    assert.match(startErr?.message ?? '', /Invalid URL/);
   });
 });

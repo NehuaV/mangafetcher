@@ -48,13 +48,17 @@ const chapterRange = parseChapterRange(values.chapters);
 const sharp = buildSharpConfig(values.format, values.quality);
 const concurrency = values.concurrency ? Number.parseInt(values.concurrency, 10) : 4;
 
-const fetcher = new MangaFetcher({
+const [fetcher, createError] = MangaFetcher.create({
   URL: targetUrl,
   outDir,
   sharp,
   chapterRange,
   concurrency,
 });
+if (createError) {
+  console.error('Fatal error:', createError);
+  process.exit(1);
+}
 
 const [, error] = await fetcher.start();
 if (error) {
