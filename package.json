@@ -1,24 +1,28 @@
 {
   "name": "crawlfetcher",
-  "module": "src/index.ts",
+  "version": "1.0.0",
   "type": "module",
+  "main": "src/index.ts",
+  "engines": {
+    "node": ">=26.0.0"
+  },
   "scripts": {
-    "generate-integration-types": "bun run _integrationGen.ts",
-    "prepare": "bun run generate-integration-types",
-    "postinstall": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install firefox",
-    "start": "PLAYWRIGHT_BROWSERS_PATH=0 bun run _start.ts",
-    "check": "biome check --write ."
-  },
-  "devDependencies": {
-    "@biomejs/biome": "2.0.0",
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.8.2"
+    "generate-integration-types": "node _integrationGen.ts",
+    "prepare": "node _integrationGen.ts",
+    "postinstall": "PLAYWRIGHT_BROWSERS_PATH=0 npx playwright install firefox",
+    "start": "PLAYWRIGHT_BROWSERS_PATH=0 node _start.ts",
+    "test": "node --test \"tests/**/*.test.ts\"",
+    "check": "npx biome check --write .",
+    "typecheck": "npx tsc --noEmit"
   },
   "dependencies": {
-    "@cliqz/adblocker-playwright": "^1.34.0",
-    "playwright": "^1.53.1",
-    "sharp": "^0.33.5"
+    "@ghostery/adblocker-playwright": "latest",
+    "playwright": "latest",
+    "sharp": "latest"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "latest",
+    "@types/node": "latest",
+    "typescript": "latest"
   }
 }

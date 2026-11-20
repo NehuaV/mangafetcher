@@ -1,5 +1,5 @@
 import type { AvifOptions, JpegOptions, PngOptions, WebpOptions } from 'sharp';
-import type { BaseIntegration } from './base';
+import type { BaseIntegration } from './base.ts';
 
 type FormatConfig<T, Format> = {
   format: Format;
@@ -13,10 +13,11 @@ export type SharpConfig =
   | FormatConfig<AvifOptions, 'avif'>;
 
 export type IntegrationParams = {
-  outDir: string;
-  chapterRange: [number, number];
+  outDir?: string;
+  chapterRange?: [number, number];
   URL: string | URL;
   sharp?: SharpConfig;
+  concurrency?: number;
 };
 
 export type Integration = BaseIntegration;
@@ -26,6 +27,7 @@ export type Environment = {
   baseURL: string;
   sharp: SharpConfig;
   chapterRange: [number, number];
+  concurrency: number;
   /**
    * The path to the series.
    *

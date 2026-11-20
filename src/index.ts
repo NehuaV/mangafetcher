@@ -1,12 +1,12 @@
-import { main } from './app';
-import { IntegrationFactory } from './integrations';
-import type { BaseIntegration } from './integrations/base';
-import type { IntegrationParams } from './integrations/types';
+import { main } from './app.ts';
+import type { BaseIntegration } from './integrations/base.ts';
+import { createIntegration } from './integrations/index.ts';
+import type { IntegrationParams } from './integrations/types.ts';
+import { err, type Result } from './types.ts';
 
 export class MangaFetcher {
   private readonly hostname: string;
   private readonly params: IntegrationParams;
-
   private integration: BaseIntegration | null = null;
 
   constructor(params: IntegrationParams) {
@@ -15,9 +15,13 @@ export class MangaFetcher {
     this.params = params;
   }
 
-  async start() {
-    const factory = await IntegrationFactory(this.hostname);
-    this.integration = await factory(this.params);
-    await main(this.integration);
+  async start(): Promise<Result<void>> {
+    const [integration, integrationError] = await createIntegration(this.hostname, this.params);
+    if (integrationError) {
+      return err(integrationError);
+    }
+
+    this.integration = integration;
+    return main(this.integration);
   }
 }

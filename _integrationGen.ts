@@ -3,7 +3,9 @@ import { readdir, writeFile } from 'node:fs/promises';
 const integrationFiles = await readdir('./src/integrations/implementations');
 
 const integrationTypes = integrationFiles
-  .map((file) => file.split('.').slice(0, -1).join('.'))
+  .filter((file) => file.endsWith('.ts') && file !== 'base.ts')
+  .map((file) => file.slice(0, -3))
+  .sort()
   .map((type) => `'${type}'`)
   .join(' | ');
 

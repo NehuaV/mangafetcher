@@ -1,5 +1,6 @@
-import type { BaseIntegration } from './base';
-import type { Environment, IntegrationParams } from './types';
+import { err, type Result, tryCatch } from '../types.ts';
+import type { BaseIntegration } from './base.ts';
+import type { Environment, IntegrationParams } from './types.ts';
 
 export const defaultEnvironment: Environment = {
   outDir: './images',
@@ -13,6 +14,7 @@ export const defaultEnvironment: Environment = {
     },
   },
   chapterRange: [1, 100],
+  concurrency: 4,
   pathToSeries: '',
   scopeSelector: '',
   titleSelectors: [],
@@ -21,19 +23,20 @@ export const defaultEnvironment: Environment = {
 
 type IntegrationClass = new (params: IntegrationParams) => BaseIntegration;
 
-export const IntegrationFactory = async (hostname: string) => {
-  return async (params: IntegrationParams): Promise<BaseIntegration> => {
-    try {
-      const module = await import(`./implementations/${hostname}.ts`);
-      const IntegrationClass = module.default as IntegrationClass;
+export async function createIntegration(hostname: string, params: IntegrationParams): Promise<Result<BaseIntegration>> {
+  if (!hostname || hostname.includes('/') || hostname.includes('..')) {
+    return err(new Error(`Invalid integration hostname: "${hostname}"`));
+  }
 
-      if (!IntegrationClass) {
-        throw new Error(`Integration class not found for ${hostname}`);
-      }
+  const [module, importError] = await tryCatch(() => import(`./implementations/${hostname}.ts`));
+  if (importError) {
+    return err(new Error(`Integration "${hostname}" not found: ${importError.message}`));
+  }
 
-      return new IntegrationClass(params);
-    } catch (error) {
-      throw new Error(`Integration "${hostname}" not found: ${error}`);
-    }
-  };
-};
+  const IntegrationClass = module.default as IntegrationClass | undefined;
+  if (!IntegrationClass) {
+    return err(new Error(`Integration class not found for "${hostname}"`));
+  }
+
+  return tryCatch(async () => new IntegrationClass(params));
+}

@@ -1,74 +1,32 @@
+import { basename } from 'node:path';
 import type { Page } from 'playwright';
-import type { Chapter } from '@/types';
-import { defaultEnvironment } from '..';
-import { BaseIntegration } from '../base';
-import type { IntegrationParams } from '../types';
+import type { Chapter, Result } from '../../types.ts';
+import { BaseIntegration } from '../base.ts';
+import { defaultEnvironment } from '../index.ts';
+import type { Environment, IntegrationParams } from '../types.ts';
 
 export default class ReaperScansCom extends BaseIntegration {
   getIntegrationType(): string {
-    const fileName = import.meta.file.split('.ts').at(0);
-    return fileName || '';
+    return basename(import.meta.filename, '.ts');
   }
 
-  createEnvironment(params: IntegrationParams, url: URL) {
+  createEnvironment(params: IntegrationParams, url: URL): Environment {
     return {
       ...defaultEnvironment,
       pathToSeries: url.pathname,
-      outDir: params.outDir,
-      sharp: params.sharp || defaultEnvironment.sharp,
-      chapterRange: params.chapterRange,
+      outDir: params.outDir ?? defaultEnvironment.outDir,
+      sharp: params.sharp ?? defaultEnvironment.sharp,
+      chapterRange: params.chapterRange ?? defaultEnvironment.chapterRange,
+      concurrency: params.concurrency ?? defaultEnvironment.concurrency,
 
       baseURL: url.origin,
-      scopeSelector: '//html/body/div/div[2]/div[1]/div/div/article/div[2]',
       titleSelectors: ['//html/body/div/div[2]/div[1]/div[2]/div[1]/article/div[1]/div/div[2]/div[1]/div[1]/h1'],
       chaptersSelectors: ['//html/body/div/div[2]/div[1]/div[2]/div[1]/article/div[3]/div[3]/ul'],
+      scopeSelector: '//html/body/div/div[2]/div[1]/div/div/article/div[2]',
     };
   }
 
-  async titleFinder(page: Page): Promise<string> {
-    const xpaths = this.environment.titleSelectors;
-
-    for (const xpath of xpaths) {
-      const headingText = await page
-        .locator(xpath)
-        .innerText()
-        .catch(() => null);
-
-      if (headingText) {
-        page.setDefaultTimeout(30_000);
-        return `${headingText}`;
-      }
-    }
-
-    return '';
-  }
-
-  async chaptersFinder(page: Page): Promise<Chapter[]> {
-    const xpaths = this.environment.chaptersSelectors;
-
-    const chapters: Chapter[] = [];
-
-    for (const xpath of xpaths) {
-      // Get all child elements from the chapter list container
-      const listofChapterElements = await page.locator(`${xpath}/*`).count();
-
-      for (let i = 0; i < listofChapterElements; i++) {
-        // Get all elements in reverse order
-        const element = page.locator(`${xpath}/*`).nth(listofChapterElements - i - 1);
-
-        // Get Inner a tag and its href attribute
-        const aTag = element.locator('a');
-        const urlPathName = await aTag.getAttribute('href');
-        const name = await aTag.locator('span').nth(0).innerText();
-
-        chapters.push({
-          url: urlPathName || '',
-          index: i,
-          name: name || `Chapter ${i + 1} ()`,
-        });
-      }
-    }
-
-    return chapters;
+  async chaptersFinder(page: Page): Promise<Result<Chapter[]>> {
+    return this.findChapters(page, 'span', (href) => new URL(href, this.environment.baseURL).toString());
   }
 }

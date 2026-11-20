@@ -1,44 +1,75 @@
 import { readdir } from 'node:fs/promises';
+import { join } from 'node:path';
 import type { Page } from 'playwright';
 import sharp from 'sharp';
-import type { Integration, SharpConfig } from './integrations/types';
-import type { Chapter, ChapterImage } from './types';
-import { createBrowser, exists, getAllChapters, getMangaName, upsertDir } from './utils';
+import type { Integration, SharpConfig } from './integrations/types.ts';
+import { type Chapter, type ChapterImage, err, ok, type Result, tryCatch } from './types.ts';
+import {
+  createBrowser,
+  exists,
+  filterChaptersByRange,
+  getAllChapters,
+  getMangaName,
+  runWithConcurrency,
+  sanitizePathSegment,
+  upsertDir,
+} from './utils.ts';
 
-async function chapterRunner(chapter: Chapter, directory: string, page: Page, integration: Integration) {
+type ImagesPack = {
+  imageArr: ChapterImage[];
+  chapterDir: string;
+};
+
+async function chapterRunner(chapter: Chapter, directory: string, page: Page, integration: Integration): Promise<Result<void>> {
   console.log(`Processing chapter: ${chapter.name}`);
 
-  await page.goto(chapter.url);
-  await page.waitForLoadState('networkidle');
+  const [, gotoError] = await tryCatch(async () => {
+    await page.goto(chapter.url);
+    await page.waitForLoadState('networkidle');
+  });
+  if (gotoError) {
+    return err(new Error(`Failed to load chapter ${chapter.name}: ${gotoError.message}`));
+  }
 
   console.log('Extracting image URLs...');
 
-  const imageUrls = await page.locator(integration.getEnvironment().scopeSelector).evaluate((element: Element): string[] => {
-    const imgs = Array.from(element.querySelectorAll('img'));
+  const [imageUrls, evalError] = await tryCatch(() =>
+    page.locator(integration.getEnvironment().scopeSelector).evaluate((element: Element): string[] => {
+      const imgs = Array.from(element.querySelectorAll('img'));
 
-    return imgs
-      .filter((img) => img.naturalHeight > 512 && img.naturalWidth > 512)
-      .filter((img) => img.src.startsWith('https://'))
-      .map((img) => img.src)
-      .filter(Boolean);
-  });
+      return imgs
+        .filter((img) => img.naturalHeight > 512 && img.naturalWidth > 512)
+        .filter((img) => img.src.startsWith('https://'))
+        .map((img) => img.src)
+        .filter(Boolean);
+    }),
+  );
+  if (evalError) {
+    return err(new Error(`Failed to extract images for chapter ${chapter.name}: ${evalError.message}`));
+  }
 
   console.log(`Found ${imageUrls.length} images meeting size requirements.`);
 
   if (imageUrls.length === 0) {
-    throw new Error(`No valid images found for chapter ${chapter.name}`);
+    return err(new Error(`No valid images found for chapter ${chapter.name}`));
   }
 
-  const chapterDir = `${directory}/${chapter.name}`;
-  await upsertDir(chapterDir);
+  const safeChapterName = sanitizePathSegment(chapter.name);
+  const chapterDir = join(directory, safeChapterName);
+  const [, dirError] = await upsertDir(chapterDir);
+  if (dirError) {
+    return err(dirError);
+  }
 
-  // Check for complete downloads
-  const existingFiles = await readdir(chapterDir);
+  const [existingFiles, readError] = await tryCatch(() => readdir(chapterDir));
+  if (readError) {
+    return err(readError);
+  }
+
   const expectedFileCount = imageUrls.length;
-
   if (existingFiles.length === expectedFileCount) {
     console.log(`Chapter ${chapter.name} already completely downloaded (${expectedFileCount} files).`);
-    return;
+    return ok(undefined);
   }
 
   console.log(`Downloading ${imageUrls.length} images for chapter ${chapter.name}...`);
@@ -50,28 +81,27 @@ async function chapterRunner(chapter: Chapter, directory: string, page: Page, in
     imageName: `page-${index}`,
   }));
 
-  const imagesPack = {
+  const imagesPack: ImagesPack = {
     imageArr,
     chapterDir,
   };
 
-  await downloadImages(imagesPack, page, integration);
+  return downloadImages(imagesPack, page, integration);
 }
 
-type ImagesPack = {
-  imageArr: ChapterImage[];
-  chapterDir: string;
-};
-
-async function downloadImages(imagePack: ImagesPack, page: Page, integration: Integration) {
+async function downloadImages(imagePack: ImagesPack, page: Page, integration: Integration): Promise<Result<void>> {
   const { imageArr, chapterDir } = imagePack;
-  const format = integration.getEnvironment().sharp.format;
-  const options = integration.getEnvironment().sharp.options;
+  const { sharp: sharpConfig, concurrency } = integration.getEnvironment();
 
-  const downloadPromises = imageArr.map((image) => downloadSingleImage(image, chapterDir, page, format, options));
-  await Promise.all(downloadPromises);
+  const [, downloadError] = await runWithConcurrency(imageArr, concurrency, (image) =>
+    downloadSingleImage(image, chapterDir, page, sharpConfig.format, sharpConfig.options),
+  );
+  if (downloadError) {
+    return err(downloadError);
+  }
 
   console.log(`Completed downloading images for ${chapterDir}`);
+  return ok(undefined);
 }
 
 async function downloadSingleImage(
@@ -81,19 +111,18 @@ async function downloadSingleImage(
   format: SharpConfig['format'],
   options: SharpConfig['options'],
   retries = 3,
-): Promise<void> {
+): Promise<Result<void>> {
   const fileName = `page-${String(image.index).padStart(3, '0')}.${format}`;
-  const filePath = `${chapterDir}/${fileName}`;
+  const filePath = join(chapterDir, fileName);
 
-  // Check if file already exists
   if (await exists(filePath)) {
     console.log(`File ${fileName} already exists, skipping...`);
-    return;
+    return ok(undefined);
   }
 
   console.log(`Downloading image ${image.index + 1}: ${image.url}`);
 
-  try {
+  const [, downloadError] = await tryCatch(async () => {
     const response = await page.request.get(image.url);
 
     if (!response.ok()) {
@@ -102,79 +131,78 @@ async function downloadSingleImage(
 
     const buffer = await response.body();
     await sharp(buffer)[format](options).toFile(filePath);
-
     console.log(`Saved ${fileName}`);
-  } catch (error) {
-    console.error(`Error downloading ${image.url}:`, error);
+  });
 
-    if (retries > 0) {
-      console.log(`Retrying ${image.url}... (${3 - retries + 1})`);
-      await new Promise((resolve) => setTimeout(resolve, 777));
-      return downloadSingleImage(image, chapterDir, page, format, options, retries - 1);
-    }
-
-    console.error(`Failed to download ${image.url} after multiple attempts`);
+  if (!downloadError) {
+    return ok(undefined);
   }
+
+  console.error(`Error downloading ${image.url}:`, downloadError.message);
+
+  if (retries > 0) {
+    console.log(`Retrying ${image.url}... (${3 - retries + 1})`);
+    await new Promise((resolve) => setTimeout(resolve, 777));
+    return downloadSingleImage(image, chapterDir, page, format, options, retries - 1);
+  }
+
+  return err(new Error(`Failed to download ${image.url} after multiple attempts: ${downloadError.message}`));
 }
 
-export async function main(integration: Integration) {
-  if (!integration.getEnvironment().pathToSeries) {
-    throw new Error('pathToSeries is required');
+export async function main(integration: Integration): Promise<Result<void>> {
+  const env = integration.getEnvironment();
+  if (!env.pathToSeries) {
+    return err(new Error('pathToSeries is required'));
   }
 
   console.log('Creating browser...');
-  const { browser, context, page } = await createBrowser();
-
-  console.log('Navigating to page...');
-  const targetUrl = `${integration.getEnvironment().baseURL}${integration.getEnvironment().pathToSeries}`;
-
-  await page.goto(targetUrl);
-  await page.waitForLoadState('domcontentloaded');
-
-  console.log('Determining manga name...');
-  const directory = await getMangaName(page, integration);
-
-  console.log('Getting all chapters...');
-  const chapters = await getAllChapters(page, integration);
-
-  // Chapter range validation
-  const chapterRange = integration.getEnvironment().chapterRange;
-  if (chapterRange.length !== 2) {
-    throw new Error('Chapter range must be an array of two numbers.');
+  const [session, browserError] = await createBrowser();
+  if (browserError) {
+    return err(browserError);
   }
 
-  if (chapterRange[0] > chapterRange[1]) {
-    throw new Error('First chapter must be less than last chapter.');
-  }
+  try {
+    const { page } = session;
+    console.log('Navigating to page...');
+    const targetUrl = `${env.baseURL}${env.pathToSeries}`;
 
-  if (chapterRange[0] < 1) {
-    throw new Error('First chapter must be greater than 1.');
-  }
-
-  // Remove chapters outside of range
-  for (const chapter of [...chapters]) {
-    if (chapter.index < chapterRange[0] - 1 || chapter.index > chapterRange[1] - 1) {
-      chapters.splice(chapters.indexOf(chapter), 1);
+    const [, navError] = await tryCatch(async () => {
+      await page.goto(targetUrl);
+      await page.waitForLoadState('domcontentloaded');
+    });
+    if (navError) {
+      return err(new Error(`Failed to navigate to ${targetUrl}: ${navError.message}`));
     }
+
+    console.log('Determining manga name...');
+    const [directory, dirError] = await getMangaName(page, integration);
+    if (dirError) {
+      return err(dirError);
+    }
+
+    console.log('Getting all chapters...');
+    const [allChapters, chaptersError] = await getAllChapters(page, integration);
+    if (chaptersError) {
+      return err(chaptersError);
+    }
+
+    const [chapters, rangeError] = filterChaptersByRange(allChapters, env.chapterRange);
+    if (rangeError) {
+      return err(rangeError);
+    }
+
+    console.log(`Found ${chapters.length} chapters in range.`);
+
+    for (const chapter of chapters) {
+      const [, chapterError] = await chapterRunner(chapter, directory, page, integration);
+      if (chapterError) {
+        return err(chapterError);
+      }
+    }
+
+    return ok(undefined);
+  } finally {
+    await session.context.close().catch(() => undefined);
+    await session.browser.close().catch(() => undefined);
   }
-
-  console.log(`Found ${chapters.length} chapters in range.`);
-
-  // check if chapter dir exists, if it does, remove from chapters
-  for (const chapter of [...chapters]) {
-    const chapterDir = `${directory}/${chapter.name}`;
-    const dirExists = await exists(chapterDir);
-
-    if (!dirExists) continue;
-
-    console.log(`Chapter ${chapter.name} already exists, skipping...`);
-    chapters.splice(chapters.indexOf(chapter), 1);
-  }
-
-  for (const chapter of chapters) {
-    await chapterRunner(chapter, directory, page, integration);
-  }
-
-  await context.close();
-  await browser.close();
 }
